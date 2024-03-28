@@ -1,0 +1,56 @@
+/* Grundlegende Stile für das Spielfeld */
+canvas {
+    display: block;
+    margin: 0 auto;
+    background-color: #000;
+  }
+  
+  /* Stile für das Modal, das am Ende des Spiels erscheint */
+  
+  
+  .modal {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  
+  .emoji {
+    font-size: 48px;
+    margin-bottom: 20px;
+  }
+  
+  .modal h1 {
+    margin: 0;
+    color: #333;
+    font-family: Arial, sans-serif;
+  }
+  
+  .modal-btn {
+    background-color: #0CD977;
+    color: #fff;
+    padding: 10px 20px;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 20px;
+    border-radius: 5px;
+  }
+  
+  /* Stile für die Konfetti-Animation */
+  .confetti {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: #f00;
+    animation: fall linear forwards;
+  }
+  
+  @keyframes fall {
+    0% {
+      top: -10%;
+    }
+    100% {
+      top: 110%;
+    }
+  }
+  

@@ -1,0 +1,44 @@
+{
+  "home": {
+    "welcome": "Добре дошли в Приложението за пинг-понг!"
+  },
+  "auth": {
+    "email": "Имейл",
+    "username": "Потребителско име",
+    "enterEmail": "Въведете вашия имейл",
+    "password": "Парола",
+    "enterPassword": "Въведете вашия парола",
+    "rememberMe": "Запомни ме",
+    "login": "Вход",
+    "forgotPassword": "Забравена парола?",
+    "notRegistered": "Все още нямате регистрация?",
+    "registerHere": "Регистрирайте се тук",
+    "register": "Регистрация",
+    "signInWith42": "Влезте с 42Sign-in",
+    "signIn": "Вход",
+    "passwordMismatch": "Парола празна/невалидна",
+    "confirmPassword": "Потвърди парола",
+    "termsAndConditions": "Условия и правила",
+    "acceptTerms": "Приемам условията и правилата"
+  },
+  "game": {
+    "title": "Играй!"
+  },
+  "leaderboard": {
+    "title": "Таблица с резултати"
+  },
+  "chat": {
+    "title": "Чат"
+  },
+  "common": {
+    "home": "Начало",
+    "or": "или",
+    "switchLanguage": "Смени езика"
+  },
+  "footer": {
+    "privacyPolicy": "Политика за поверителност",
+    "impressum": "Импресум",
+    "madeWith": "Изработено с",
+    "at42Vienna": "в 42Vienna"
+  }
+}

@@ -1,0 +1,33 @@
+/* StartGame.css */
+
+/* Custom styling for buttons */
+.btn-primary {
+  background-color: #007bff;
+  color: #fff;
+  border-color: #007bff;
+  display: block; /* Make buttons block-level elements */
+  margin: 0 auto; /* Center align buttons */
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+  box-shadow: 0 7px 5px -5px rgba(0, 0, 0, 0.3);
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Custom styling for button icons */
+.btn-primary span {
+  flex: 1;
+}
+
+.btn-primary svg {
+  margin-left: 10px;
+}
+
+/* Custom styling for button size */
+.btn-lg {
+  padding: 10px 20px;
+  font-size: 20px;
+}
