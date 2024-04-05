@@ -48,3 +48,37 @@ class Tournament(models.Model):
 
     class Meta:
         db_table = 'tournaments'
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
+    nickname = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.user.username
+
+class Player(models.Model):
+    name = models.CharField(max_length=100)
+    position_x = models.IntegerField(default=0)
+    position_y = models.IntegerField(default=0)
+
+class WaitingPlayer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.user.username
+
+
+class Room(models.Model):
+    room_name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.room_name
+
+class Message(models.Model):
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    sender = models.CharField(max_length=255)
+    message = models.TextField()
+
+    def __str__(self):
+        return str(self.room)

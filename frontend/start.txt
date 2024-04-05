@@ -1,8 +1,0 @@
-nur bei 1. mal
-npm install
-
-dann in frontend
-npm start
-
-in backend
-python3 manage.py runserver

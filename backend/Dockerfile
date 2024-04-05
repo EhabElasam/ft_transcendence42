@@ -1,24 +1,20 @@
-# Use official Python image as the base image
-FROM python:3.9
+FROM python:3.12.1-slim-bullseye
 
-# Set environment variables for Python
+RUN apt-get update && apt-get install -y dumb-init
+
+RUN apt-get install -y netcat postgresql-client
+
+WORKDIR /usr/src/app
+
 ENV PYTHONDONTWRITEBYTECODE 1
+
 ENV PYTHONUNBUFFERED 1
 
-# Set the working directory in the container
-WORKDIR /app
+RUN pip install --upgrade pip
 
-# Copy requirements.txt to the working directory
 COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the Django project into the container
-COPY . .
+RUN pip install -r requirements.txt
 
-# Expose the port on which Django runs
-EXPOSE 8000
-
-# Command to run the Django server
-CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+ENTRYPOINT ["dumb-init", "./start.sh"]

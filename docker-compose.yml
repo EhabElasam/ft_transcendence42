@@ -1,34 +1,87 @@
 services:
-  django:
+  backend:
+    container_name: backend
+    restart: on-failure:5
     build:
-      context: ./backend
-    env_file: .env
+      context: backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/usr/src/app/
     ports:
-      - "8000:8000"
-    depends_on:
-      - postgres
-    environment:
-      - DB_HOST=postgres
-      # Add other Django environment variables here if needed
-    restart: always
-
-  react:
-    build:
-      context: ./frontend
-    env_file: .env
-    ports:
-      - "3000:3000"
-    restart: always
+      - '8000:8000'
+    env_file:
+      - ./backend/.env
 
   postgres:
+    container_name: postgres
     image: postgres:latest
-    restart: always
-    environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
+    restart: on-failure:5
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - database-postgres:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    env_file:
+      - .env
+
+  nginx:
+    container_name: nginx
+    restart: on-failure:5
+    build:
+      context: ./src/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./frontend:/etc/frontend
+    depends_on:
+      - backend
+
+  prometheus:
+    container_name: prometheus
+    build: ./src/prometheus
+    image: prometheus
+    volumes:
+      - prometheus:/volumes/prometheus
+    ports:
+      - '9090:9090'
+    networks:
+      - transcendence
+    env_file:
+      - .env
+    restart: unless-stopped
+  grafana:
+    container_name: grafana
+    build: ./src/grafana
+    image: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana:/volumes/grafana
+    networks:
+      - transcendence
+    env_file:
+      - .env
+    restart: unless-stopped
 
 volumes:
-  postgres-data:
+  database-postgres:
+  prometheus:
+    name: prometheus
+    driver: local
+    driver_opts:
+      device: ${VOLUME_PATH}/prometheus
+      o: bind
+      type: none
+  grafana:
+    name: grafana
+    driver: local
+    driver_opts:
+      device: ${VOLUME_PATH}/grafana
+      o: bind
+      type: none
+      
+networks:
+  transcendence:
+    name: transcendence
+    driver: bridge

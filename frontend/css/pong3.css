@@ -1,0 +1,19 @@
+/* pong-styles.css */
+
+/* body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000; // Schwarzer Hintergrund für das Spiel 
+} */
+
+#canvasp3 {
+    margin: 10;
+    border: 2px solid #FFF; /* Weißer Rahmen um das Canvas */
+    background-color: #cc5009; /* Dunkelgrüner Hintergrund */
+}
+
+/* Hier könnten weitere spezialisierte Stile hinzugefügt werden */

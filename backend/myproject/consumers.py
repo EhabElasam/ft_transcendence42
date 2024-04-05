@@ -1,4 +1,3 @@
-# your_app/consumers.py
 
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer

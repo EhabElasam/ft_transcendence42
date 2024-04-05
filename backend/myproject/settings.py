@@ -3,43 +3,38 @@ import os
 
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
-
+SECRET_KEY = os.getenv('SECRET_KEY')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+CLIENT_ID = os.environ.get("CLIENT_ID")
+CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+REDIRECT_URI = os.environ.get("REDIRECT_URI")
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
     'pong42.azurewebsites.net',
     '127.0.0.1',
-    'transcendence-beige.vercel.app',  # Add your domain name here
-    'four2trans-backend.onrender.com',  # Add Render domain here
-    'zc5vlf-3000.csb.app',
-    'mwlvdq-3000.csb.app',
-    'transcendence-git-draft-exciting-yalow-hubble42.vercel.app',
-    'y494mt-3000.csb.app',
-    '8ff524ec-5dfb-4374-9125-a53385e1cc63-00-14kx31mg03i0t.spock.replit.dev',
-    'transcendence-bynd-asb2ihs6--3000--6f234770.local-credentialless.webcontainer.io', 
-    'localhost',
+    'pong42.vercel.app',
+    'four2trans-backend.onrender.com', 
     'localhost:3000',
-    'transcendence-bynd--3000--6f234770.local-corp.webcontainer.io',
+    'localhost:5500',
+    'localhost:8443',
+    'localhost:443',
+    'localhost:8000',
+    'localhost:8080',
     'api.intra.42.fr',
+    'transcendence-beige.vercel.app',
+    'psychic-journey-9q4rjvxwvwjf7579-443.app.github.dev/',
 ]
 
 
 SOCKETIO_HOST = "0.0.0.0"
 SOCKETIO_PORT = 8001
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -92,29 +87,33 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [('127.0.0.1', 6378)],
         },
     },
 }
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        #'HOST': 'localhost',
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': '5432',
+        'NAME': os.environ.get('POSTGRES_DB', BASE_DIR / 'db.sqlite3'),
+        'USER': os.environ.get('POSTGRES_USER', 'user'),
+        'PASSWORD': os.environ.get('PGPASSWORD', 'password'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+    },
+    'chat': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'chat_db.sqlite3',
     }
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
+X_FRAME_OPTIONS = 'ALLOWALL'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -146,30 +145,31 @@ REST_FRAMEWORK = {
 }
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
+
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Vienna'
 
 USE_I18N = True
 
 USE_TZ = True
 
-CSRF_TRUSTED_ORIGINS = ['http://pong42.azurewebsites.net','https://pong42.azurewebsites.net','http://localhost:3000','http://localhost','https://transcendence-beige.vercel.app','https://y494mt-3000.csb.app','https://transcendence-git-draft-exciting-yalow-hubble42.vercel.app/','https://mwlvdq-3000.csb.app','http://8ff524ec-5dfb-4374-9125-a53385e1cc63-00-14kx31mg03i0t.spock.replit.dev','http://transcendence-bynd-asb2ihs6--3000--6f234770.local-credentialless.webcontainer.io', 'http://transcendence-bynd--3000--6f234770.local-corp.webcontainer.io','https://api.intra.42.fr']
 
-CORS_ALLOWED_ORIGINS = ['https://pong42.azurewebsites.net','http://pong42.azurewebsites.net','http://localhost:3000','http://localhost','https://transcendence-beige.vercel.app','https://y494mt-3000.csb.app','https://mwlvdq-3000.csb.app','http://8ff524ec-5dfb-4374-9125-a53385e1cc63-00-14kx31mg03i0t.spock.replit.dev','http://transcendence-bynd-asb2ihs6--3000--6f234770.local-credentialless.webcontainer.io', 'http://transcendence-bynd--3000--6f234770.local-corp.webcontainer.io','https://api.intra.42.fr']
+CSRF_TRUSTED_ORIGINS = ['http://localhost','https://localhost','http://localhost:8000','https://localhost:8443','https://localhost:443','https://psychic-journey-9q4rjvxwvwjf7579-8080.app.github.dev','https://psychic-journey-9q4rjvxwvwjf7579-8000.app.github.dev','https://psychic-journey-9q4rjvxwvwjf7579-443.app.github.dev','http://127.0.0.1','http://127.0.0.1:5500','https://pong42.vercel.app','http://pong42.vercel.app','http://pong42.azurewebsites.net','https://pong42.azurewebsites.net','http://localhost:8000','http://localhost:3000','http://localhost:5500','http://localhost','https://transcendence-beige.vercel.app','https://api.intra.42.fr']
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
+CORS_ALLOWED_ORIGINS = ['http://localhost','https://localhost','http://localhost:8000','https://localhost:8443','https://localhost:443','https://psychic-journey-9q4rjvxwvwjf7579-8080.app.github.dev','https://psychic-journey-9q4rjvxwvwjf7579-8000.app.github.dev','https://psychic-journey-9q4rjvxwvwjf7579-443.app.github.dev','http://127.0.0.1','http://127.0.0.1:5500','https://pong42.vercel.app','http://pong42.vercel.app','http://localhost:8000','http://pong42.azurewebsites.net','https://pong42.azurewebsites.net','http://localhost:3000','http://localhost:5500','http://localhost','https://transcendence-beige.vercel.app','https://api.intra.42.fr']
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CSRF_COOKIE_SECURE = False
 APPEND_SLASH=False
+

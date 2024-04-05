@@ -19,10 +19,88 @@ import json
 from .forms import UserRegistrationForm
 from .models import Tournament, User  # Change import here
 from .serializers import TournamentSerializer
+from .models import Player, WaitingPlayer
+from .models import Room, Message
+
 
 token_obtain_pair_view = TokenObtainPairView.as_view()
 token_refresh_view = TokenRefreshView.as_view()
 
+@csrf_exempt
+def ChatPage(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        room = request.POST['room']
+
+        try:
+            get_room = Room.objects.get(room_name=room)
+            return redirect('room', room_name=room, username=username)
+
+        except Room.DoesNotExist:
+            new_room = Room(room_name = room)
+            new_room.save()
+            return redirect('room', room_name=room, username=username)
+
+    return render(request, 'chat.html')
+
+@csrf_exempt
+def MessageView(request, room_name, username):
+
+    get_room = Room.objects.get(room_name=room_name)
+
+    if request.method == 'POST':
+        message = request.POST['message']
+
+        print(message)
+
+        new_message = Message(room=get_room, sender=username, message=message)
+        new_message.save()
+
+    get_messages= Message.objects.filter(room=get_room)
+    
+    context = {
+        "messages": get_messages,
+        "user": username
+    }
+    return render(request, 'message.html', context)
+
+@csrf_exempt
+def signin42b(request):
+    # Retrieve the redirect URI and client ID from environment variables
+    redirect_uri = os.getenv('VANILLA_REDIRECT_URI')
+    client_id = os.getenv('VANILLA_CLIENT_ID')
+    
+    # Construct the authorization URL
+    authorization_url = f'https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code'
+    
+    # Redirect the user to the authorization URL
+    return HttpResponseRedirect(authorization_url)
+
+@csrf_exempt
+def signin42c(request):
+    # Retrieve the redirect URI and client ID from environment variables
+    redirect_uri = os.getenv('REDIRECT_URI')
+    client_id = os.getenv('CLIENT_ID')
+    
+    # Construct the authorization URL
+    authorization_url = f'https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code'
+    
+    # Redirect the user to the authorization URL
+    return HttpResponseRedirect(authorization_url)
+
+
+
+@csrf_exempt
+def signin42(request):
+    # Retrieve the redirect URI and client ID from environment variables
+    redirect_uri = os.getenv('REACT_APP_REDIRECT_URI')
+    client_id = os.getenv('REACT_APP_CLIENT_ID')
+    
+    # Construct the authorization URL
+    authorization_url = f'https://api.intra.42.fr/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code'
+    
+    # Redirect the user to the authorization URL
+    return HttpResponseRedirect(authorization_url)
 
 @csrf_exempt
 def proxy_userinfo(request):
@@ -107,9 +185,134 @@ def proxy_view(request):
         user.save()
 
         # Return a redirect response to the frontend with the code included in the URL
-        return redirect(f'https://transcendence-beige.vercel.app/login/return?code={code}')
+        return redirect(f'https://localhost:8443/login/return/?code={code}')
     except requests.RequestException as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def proxy_viewb(request):
+    # Get the authorization code from the request parameters
+    code = request.GET.get('code')
+    if not code:
+        return JsonResponse({'error': 'Code parameter is missing'}, status=400)
+
+    # Retrieve environment variables
+    client_id = os.getenv('VANILLA_CLIENT_ID')
+    client_secret = os.getenv('VANILLA_CLIENT_SECRET')
+    redirect_uri = os.getenv('VANILLA_REDIRECT_URI')
+
+    # Check if environment variables are set
+    if not client_id or not client_secret or not redirect_uri:
+        return JsonResponse({'error': 'Environment variables are not set correctly'}, status=500)
+
+    # Prepare the data for token exchange
+    data = {
+        'grant_type': 'authorization_code',
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'code': code,
+        'redirect_uri': redirect_uri,
+    }
+
+    try:
+        # Exchange the authorization code for an access token
+        response = requests.post('https://api.intra.42.fr/oauth/token', data=data)
+        response.raise_for_status()  # Raise an exception for non-2xx responses
+
+        # Extract the access token from the response
+        access_token = response.json().get('access_token')
+
+        # Make a request to get user data using the access token
+        user_data_response = requests.get('https://api.intra.42.fr/v2/me', headers={'Authorization': f'Bearer {access_token}'})
+        user_data_response.raise_for_status()  # Raise an exception for non-2xx responses
+
+        # Extract required user data
+        user_data = user_data_response.json()
+        login = user_data.get('login')
+        email = user_data.get('email')
+        image_data = user_data.get('image', {})
+        image_link = image_data.get('versions', {}).get('medium', image_data.get('link'))
+
+
+        # Check if the user already exists in the database
+        user, created = User.objects.get_or_create(username=login, email=email)
+
+        # Update user fields
+        user.nickname = user_data.get('nickname', user.username)  # Set nickname to login name if not provided
+        user.score += 0 
+        user.image_link = image_link
+        user.access_token = access_token
+        user.authorization_code = code
+        user.save()
+
+        # Return a redirect response to the frontend with the code included in the URL
+        return redirect(f'https://pong42.vercel.app/return.html?code={code}')
+    except requests.RequestException as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def proxy_viewc(request):
+    # Get the authorization code from the request parameters
+    code = request.GET.get('code')
+    if not code:
+        return JsonResponse({'error': 'Code parameter is missing'}, status=400)
+
+    # Retrieve environment variables
+    client_id = os.getenv('CLIENT_ID')
+    client_secret = os.getenv('CLIENT_SECRET')
+    redirect_uri = os.getenv('REDIRECT_URI')
+
+    # Check if environment variables are set
+    if not client_id or not client_secret or not redirect_uri:
+        return JsonResponse({'error': 'Environment variables are not set correctly'}, status=500)
+
+    # Prepare the data for token exchange
+    data = {
+        'grant_type': 'authorization_code',
+        'client_id': client_id,
+        'client_secret': client_secret,
+        'code': code,
+        'redirect_uri': redirect_uri,
+    }
+
+    try:
+        # Exchange the authorization code for an access token
+        response = requests.post('https://api.intra.42.fr/oauth/token', data=data)
+        response.raise_for_status()  # Raise an exception for non-2xx responses
+
+        # Extract the access token from the response
+        access_token = response.json().get('access_token')
+
+        # Make a request to get user data using the access token
+        user_data_response = requests.get('https://api.intra.42.fr/v2/me', headers={'Authorization': f'Bearer {access_token}'})
+        user_data_response.raise_for_status()  # Raise an exception for non-2xx responses
+
+        # Extract required user data
+        user_data = user_data_response.json()
+        login = user_data.get('login')
+        email = user_data.get('email')
+        image_data = user_data.get('image', {})
+        image_link = image_data.get('versions', {}).get('medium', image_data.get('link'))
+
+
+        # Check if the user already exists in the database
+        user, created = User.objects.get_or_create(username=login, email=email)
+
+        # Update user fields
+        user.nickname = user_data.get('nickname', user.username)  # Set nickname to login name if not provided
+        user.score += 0 
+        user.image_link = image_link
+        user.access_token = access_token
+        user.authorization_code = code
+        user.save()
+
+        # Return a redirect response to the frontend with the code included in the URL
+        return redirect(f'https://localhost:8443/return.html?code={code}')
+    except requests.RequestException as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 @csrf_exempt
 @api_view(['POST'])
@@ -254,14 +457,31 @@ def get_csrf_token(request):
     # Return the CSRF token in a JSON response
     return JsonResponse({'csrfToken': csrf_token})
 
+
 @csrf_exempt
 def register(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])  # Hash password
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            
+            # Check if username or email already exists
+            if User.objects.filter(username=username).exists():
+                return HttpResponse("Error occurred: Already exists.", status=400)
+            
+            if User.objects.filter(email=email).exists():
+                return HttpResponse("Error occurred: Already exists.", status=400)
+            
+            # Create user object
+            user = User.objects.create_user(username=username, email=email, password=password)
             user.save()
+            
+            # Set initial score to 0
+            profile = UserProfile.objects.create(user=user, score=0, nickname=username)
+            profile.save()
+            
             return redirect('login')
         else:
             # Return form errors if the form is invalid
@@ -271,7 +491,7 @@ def register(request):
         form = UserRegistrationForm()  # Move form initialization here
         return render(request, 'registration/register.html', {'form': form})  # Render the registration form template
 
-
+            
 @csrf_exempt
 def login_view(request):
     # Handle login form submission and authentication logic here
@@ -287,3 +507,65 @@ def login_view(request):
     else:
         return render(request, 'login.html')  # Render the login form template
 
+@csrf_exempt
+def update_player_position(request):
+    if request.method == 'POST':
+        # Retrieve player data from request
+        player_id = request.POST.get('player_id')
+        position_x = request.POST.get('position_x')
+        position_y = request.POST.get('position_y')
+
+        # Update player position in the database
+        try:
+            player = Player.objects.get(id=player_id)
+            player.position_x = position_x
+            player.position_y = position_y
+            player.save()
+            return JsonResponse({'success': True})
+        except Player.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Player not found'})
+
+    # Handle other HTTP methods gracefully
+    return JsonResponse({'success': False, 'error': 'Invalid HTTP method'})
+
+@csrf_exempt
+def get_game_state(request):
+    # Retrieve game state from the database
+    players = Player.objects.all()
+    game_state = [{'id': player.id, 'name': player.name, 'position_x': player.position_x, 'position_y': player.position_y} for player in players]
+    return JsonResponse({'game_state': game_state})
+
+waiting_queue = []
+
+@csrf_exempt
+def home(request):
+    return render(request, 'home.html')
+
+@csrf_exempt
+def custom_404(request, exception):
+    return render(request, '404.html', status=404)
+
+@csrf_exempt
+def check_player_waiting(request, user_login):
+    global waiting_queue
+
+    # Check if there are any players waiting in the queue
+    if waiting_queue:
+        # If there are waiting players, match them with the current user
+        matched_user = waiting_queue.pop(0)  # Get the first player from the queue
+        # Perform matching logic here, for example, you can return both usernames
+        return JsonResponse({'waiting': True, 'matched_user': matched_user, 'current_user': user_login})
+    else:
+        # If there are no waiting players, add the current user to the waiting queue
+        waiting_queue.append(user_login)  # Add the current user to the waiting queue
+        return JsonResponse({'waiting': False})
+
+
+# Additional view to remove user from waiting queue if they cancel waiting
+@csrf_exempt
+def cancel_waiting(request, user_login):
+    global waiting_queue
+
+    # Remove the user from the waiting queue if they cancel waiting
+    waiting_queue = [player for player in waiting_queue if player != user_login]
+    return JsonResponse({'message': f'User {user_login} removed from waiting queue'})
