@@ -17,52 +17,31 @@ import requests
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 import json
 from .forms import UserRegistrationForm
-from .models import Tournament, User  # Change import here
+from .models import Tournament, User
 from .serializers import TournamentSerializer
 from .models import Player, WaitingPlayer
-from .models import Room, Message
+from .models import Message
 
 
 token_obtain_pair_view = TokenObtainPairView.as_view()
 token_refresh_view = TokenRefreshView.as_view()
 
-@csrf_exempt
-def ChatPage(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        room = request.POST['room']
-
-        try:
-            get_room = Room.objects.get(room_name=room)
-            return redirect('room', room_name=room, username=username)
-
-        except Room.DoesNotExist:
-            new_room = Room(room_name = room)
-            new_room.save()
-            return redirect('room', room_name=room, username=username)
-
-    return render(request, 'chat.html')
 
 @csrf_exempt
-def MessageView(request, room_name, username):
+def messages(request):
+    if request.method == 'GET':
+        messages = list(Message.objects.all().values())
+        return JsonResponse(messages, safe=False)
+    elif request.method == 'POST':
+        data = json.loads(request.body)
+        message = Message.objects.create(name=data['name'], text=data['text'])
+        return JsonResponse({'id': message.id, 'name': message.name, 'text': message.text})
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    get_room = Room.objects.get(room_name=room_name)
-
-    if request.method == 'POST':
-        message = request.POST['message']
-
-        print(message)
-
-        new_message = Message(room=get_room, sender=username, message=message)
-        new_message.save()
-
-    get_messages= Message.objects.filter(room=get_room)
-    
-    context = {
-        "messages": get_messages,
-        "user": username
-    }
-    return render(request, 'message.html', context)
+@csrf_exempt
+def chat(request):
+    return render(request, 'chatpage.html')
 
 @csrf_exempt
 def signin42b(request):
