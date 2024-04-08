@@ -1,5 +1,7 @@
 function showPong3() {
     const canvas = document.getElementById('canvasp3');
+    if (canvas)
+    {
     const ctx = canvas.getContext('2d');
     canvas.width = 800;
     canvas.height = 600;
@@ -9,6 +11,8 @@ function showPong3() {
     let upArrowPressed = false;
     let downArrowPressed = false;
     let gameOver = false;
+    let isGamePaused = false;
+
     
 
 
@@ -57,6 +61,18 @@ function showPong3() {
     document.addEventListener('keydown', keyDownHandler);
     document.addEventListener('keyup', keyUpHandler);
     canvas.addEventListener('mousemove', mouseMoveHandler);
+
+    document.addEventListener("visibilitychange", function() {
+        if (document.visibilityState === 'hidden') {
+            // Pausiere das Spiel
+            isGamePaused = true;
+            // Optional: Zeige eine Meldung an oder handle das UI entsprechend
+        } else {
+            // Setze das Spiel fort
+            isGamePaused = false;
+            // Optional: Entferne die Pausen-Meldung oder aktualisiere das UI entsprechend
+        }
+    });
 
     function keyDownHandler(event) {
         switch(event.keyCode) {
@@ -146,14 +162,63 @@ function showPong3() {
       }
     }
 
-    function showGameOverModal(loser) {
+    
+    const startMessage = document.getElementById('startMessage');
+
+  showStartMessageWithCountdown(5);
+
+    function showStartMessageWithCountdown(seconds) {
+    if(seconds > 0) {
+        // Zeichne die Nachricht auf dem Canvas
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; // Transluzenter schwarzer Hintergrund
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#FFF"; // Weiße Schriftfarbe
+        ctx.font = "30px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Whoever gets 7 goals loses", canvas.width / 2, canvas.height / 2 - 30);
+        ctx.font = "bold 50px Arial";
+        ctx.fillText(seconds, canvas.width / 2, canvas.height / 2 + 30);
+
+        // Warte eine Sekunde und zeichne dann das nächste Update
+        setTimeout(function() {
+        showStartMessageWithCountdown(seconds - 1);
+        }, 1000);
+    } else {
+        // Starte das Spiel, wenn der Countdown vorbei ist
+        gameLoop();
+    }
+    }
+
+    function showGameOverModall(loser) {
         ctx.fillStyle = "white";
         ctx.font = "48px Arial";
         ctx.fillText(`${loser} lost!`, canvas.width / 4, canvas.height / 2);
         
         // Zeige den "Neues Spiel" Button an
-        document.getElementById('newGButton').style.display = 'block';
+        const newGButton2 = document.getElementById('newGButton');
+        if (newGButton2)
+            document.getElementById('newGButton').style.display = 'block';
         newGButton();
+    }
+
+    function showGameOver() {
+
+        // Dimme den Hintergrund
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "white";
+        ctx.font = "48px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(gameOverMessage, canvas.width / 2, canvas.height / 2 - 100); // gameOverMessage sollte die Verlierer-Nachricht sein
+    
+    }
+    
+    function showGameOverModal(loser) {
+        gameOverMessage = `${loser} lost!`;
+        showGameOverModall(loser);
+        gameOver = true;
     }
 
     function disableControls() {
@@ -161,7 +226,7 @@ function showPong3() {
         document.removeEventListener('keyup', keyUpHandler);
         canvas.removeEventListener('mousemove', mouseMoveHandler);
     }
-    
+
     function update() {
         if (gameOver) return;
     
@@ -255,6 +320,10 @@ function showPong3() {
         drawPaddle(player3.x, player3.y, player3.width, player3.height, player3.color);
         drawBall(ball.x, ball.y, ball.radius, ball.color);
         drawScore();
+        if (gameOver) {
+            showGameOver(); // Diese Funktion wird später definiert
+        }
+
     }
 
     function drawPaddle(x, y, width, height, color) {
@@ -271,12 +340,12 @@ function showPong3() {
     }
 
     function gameLoop() {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
+        if (!isGamePaused && !gameOver) {
+            update();
+            draw();
+        }
+        requestAnimationFrame(gameLoop);;
     }
 
-    gameLoop();
 }
-
-showPong3();
+}

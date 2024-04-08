@@ -20,6 +20,7 @@ const routes = {
   "#playersremote2": "/views/playersremote2.html",
   "#aboutus": "/views/aboutus.html",
   "#pong3": "/views/pong3.html",
+  "#viewprofile": "/views/viewprofile.html",
 };
 
 let translationsCache = {}; 
@@ -28,21 +29,41 @@ let currentLanguage = '';
 if (!currentLanguage) {
     currentLanguage = 'en';
 }
-const currentURL = window.location.href;
-let backendURL = "";
-const privateIPRegex = /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/;
-if (currentURL.includes("localhost") || currentURL.includes("127.0.0.1")) {
-    backendURL = "http://localhost:8000";
-    backendSigninURL = "http://localhost:8000/api/signin42c/";
-} else if (privateIPRegex.test(currentURL)) {
-    backendURL = "http://localhost:8000";
-    backendSigninURL = "http://localhost:8000/api/signin42c/"; 
-} else {
-    backendURL = "https://pong42.azurewebsites.net";
-    backendSigninURL = "https://pong42.azurewebsites.net/api/signin42b/";
+
+function getBackendURL() {
+  const currentURL = window.location.href;
+  const privateIPRegex = /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/;
+  let backendURL = "";
+  
+  if (currentURL.includes("localhost") || currentURL.includes("127.0.0.1") || privateIPRegex.test(currentURL)) {
+      backendURL = "http://localhost:8000";
+  } else {
+      backendURL = "https://pong42.azurewebsites.net";
+  }
+  
+  return backendURL;
 }
 
-console.log("Backend URL:", backendURL);
+function getBackendSigninURL() {
+  const currentURL = window.location.href;
+  const privateIPRegex = /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/;
+  let backendSigninURL = "";
+  
+  if (currentURL.includes("localhost") || currentURL.includes("127.0.0.1") || privateIPRegex.test(currentURL)) {
+      backendSigninURL = "http://localhost:8000/api/signin42c/";
+  } else {
+      backendSigninURL = "https://pong42.azurewebsites.net/api/signin42b/";
+  }
+  
+  return backendSigninURL;
+}
+
+// Usage example:
+const apiUrl = `${getBackendURL()}/api/messages`;
+const signinUrl = `${getBackendURL()}/api/signin42c/`;
+
+
+console.log("Backend URL:", getBackendURL());
 
 updateNavigation();
 
@@ -134,9 +155,38 @@ const handleLocation = async () => {
   switch(path) {
     case "#profile":
       if (localStorage.getItem("isLoggedIn") === "true") {
-          fetchAndDisplayProfile();
+        fetchAndDisplayProfile();
       }
       break;
+    
+      case "#viewprofile":
+    const hashParamsString = window.location.hash.substring(1);
+
+    // Extracting the parameters from the string
+    const paramsIndex = hashParamsString.indexOf('?');
+    if (paramsIndex !== -1) {
+        const paramsString = hashParamsString.substring(paramsIndex + 1);
+        const hashParams = new URLSearchParams(paramsString);
+
+        if (hashParams && hashParams.has('u')) {
+            const username = hashParams.get('u');
+            if (username) {
+                await fetchAndDisplayViewProfile(username);
+            } else {
+                // Handle scenario where no username is provided
+            }
+        } else {
+            console.error("No 'u' parameter found in the URL.");
+            // Handle scenario where 'u' parameter is not present
+        }
+    } else {
+        console.error("No parameters found in the URL.");
+        // Handle scenario where no parameters are present
+    }
+    break;
+
+
+    
     case "#leaderboard":
       if (localStorage.getItem("isLoggedIn") === "true") {
         if (!leaderboardData || leaderboardData.length === 0) {
@@ -166,7 +216,8 @@ const handleLocation = async () => {
     case "#player3d1":
       showPlayer3d1Page();
       break;
-    case "#aboutus":
+    
+      case "#aboutus":
       showAboutUsPage();
       break;
     case '#play!':
@@ -179,6 +230,7 @@ const handleLocation = async () => {
       break;
   }
 };
+
 
 handleLocation();
 
