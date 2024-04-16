@@ -20,15 +20,13 @@ const routes = {
   "#playersremote2": "/views/playersremote2.html",
   "#aboutus": "/views/aboutus.html",
   "#pong3": "/views/pong3.html",
+  "#pong4": "/views/pong4.html",
+  "#tic1": "/views/tic1.html",
+  "#tic2": "/views/tic2.html",
   "#viewprofile": "/views/viewprofile.html",
+  "#rps" : "/views/rps.html",
 };
 
-let translationsCache = {}; 
-let currentLanguage = '';
-
-if (!currentLanguage) {
-    currentLanguage = 'en';
-}
 
 function getBackendURL() {
   const currentURL = window.location.href;
@@ -36,7 +34,7 @@ function getBackendURL() {
   let backendURL = "";
   
   if (currentURL.includes("localhost") || currentURL.includes("127.0.0.1") || privateIPRegex.test(currentURL)) {
-      backendURL = "http://localhost:8000";
+      backendURL = "https://localhost:8443/api";
   } else {
       backendURL = "https://pong42.azurewebsites.net";
   }
@@ -50,7 +48,7 @@ function getBackendSigninURL() {
   let backendSigninURL = "";
   
   if (currentURL.includes("localhost") || currentURL.includes("127.0.0.1") || privateIPRegex.test(currentURL)) {
-      backendSigninURL = "http://localhost:8000/api/signin42c/";
+      backendSigninURL = "https://localhost:8443/api/signin42c/";
   } else {
       backendSigninURL = "https://pong42.azurewebsites.net/api/signin42b/";
   }
@@ -58,20 +56,52 @@ function getBackendSigninURL() {
   return backendSigninURL;
 }
 
-// Usage example:
-const apiUrl = `${getBackendURL()}/api/messages`;
-const signinUrl = `${getBackendURL()}/api/signin42c/`;
+let translationsCache = {}; 
+let currentLanguage = localStorage.getItem('language');
+if (!currentLanguage) {
+  const userLanguage = navigator.language.toLowerCase();
+  if (userLanguage.startsWith('en')) {
+    currentLanguage = 'en';
+  } else if (userLanguage.startsWith('de') || userLanguage.startsWith('at') || userLanguage.startsWith('ch')) {
+    currentLanguage = 'at';
+  } else if (userLanguage.startsWith('tr')) {
+    currentLanguage = 'tr';
+  } else if (userLanguage.startsWith('bg')) {
+    currentLanguage = 'bg';
+  } else if (userLanguage.startsWith('fr')) {
+    currentLanguage = 'fr';
+  } else if (userLanguage.startsWith('ar')) {
+    currentLanguage = 'eg';
+  } else if (userLanguage.startsWith('es')) {
+    currentLanguage = 'es';
+  } else if (userLanguage.startsWith('it')) {
+    currentLanguage = 'it';
+  } else if (userLanguage.startsWith('ua')) {
+    currentLanguage = 'ua';
+  } else if (userLanguage.startsWith('ru')) {
+    currentLanguage = 'ru';
+  } else if (userLanguage.startsWith('pt')) {
+    currentLanguage = 'pt';
+  } else if (userLanguage.startsWith('zh')) {
+    currentLanguage = 'zh';
+  } else {
+    currentLanguage = 'en';
+  }
+  localStorage.setItem('language', currentLanguage);
+}
 
 
-console.log("Backend URL:", getBackendURL());
+
+
+
+const apiUrl = `${getBackendURL()}/messages`;
+const signinUrl = `${getBackendURL()}/signin42c/`;
+
+
 
 updateNavigation();
 
-function changeLanguage(languageCode) {
-  currentLanguage = languageCode; 
-  translationsCache = {}; 
-  translate(currentLanguage); 
-}
+
 
 async function fetchAndCacheTranslations(language) {
   try {
@@ -89,12 +119,12 @@ async function initialize() {
   await fetchAndCacheTranslations(currentLanguage);
 }
 
-
 async function changeLanguage(languageCode) {
-  currentLanguage = languageCode; 
-  translationsCache = {}; 
-  await fetchAndCacheTranslations(currentLanguage);
-  translate(currentLanguage); 
+  currentLanguage = languageCode;
+  localStorage.setItem('language', languageCode);
+  translationsCache = {};
+  await fetchAndCacheTranslations(languageCode);
+  translate(languageCode);
 }
 
 
@@ -116,7 +146,7 @@ function translateKey(key) {
           translation = translation[part];
         } else {
           
-          reject(new Error(`Translation for key '${key}' not found`));
+          //reject(new Error(`Translation for key '${key}' not found`));
           return;
         }
       }
@@ -125,7 +155,8 @@ function translateKey(key) {
       resolve(translation);
     } else {
       
-      reject(new Error(`Translations for language '${lang}' not found in the cache`));
+      //reject(new Error(`Translations for language '${lang}' not found in the cache`));
+      return;
     }
   });
 }
@@ -133,7 +164,18 @@ function translateKey(key) {
 
 initialize();
 
+function doLogout (){
+  const language = localStorage.getItem("language");
+  localStorage.clear(); 
+  if (language) {
+    localStorage.setItem("language", language);
+  }
+  localStorage.setItem("isLoggedIn", "false");
 
+  setTimeout(() => {
+    window.location.href = "/"; 
+}, 1000);
+};
 
 const handleLocation = async () => {
   let path = window.location.hash || '#'; 
@@ -141,7 +183,6 @@ const handleLocation = async () => {
   if (questionMarkIndex !== -1) {
     path = path.slice(0, questionMarkIndex);
   }
-  console.log("path:" + path);
   const route = routes[path] || routes[404];
   const html = await fetch(route).then((data) => data.text());
   document.getElementById("app").innerHTML = html;
@@ -162,7 +203,7 @@ const handleLocation = async () => {
       case "#viewprofile":
     const hashParamsString = window.location.hash.substring(1);
 
-    // Extracting the parameters from the string
+    
     const paramsIndex = hashParamsString.indexOf('?');
     if (paramsIndex !== -1) {
         const paramsString = hashParamsString.substring(paramsIndex + 1);
@@ -173,15 +214,15 @@ const handleLocation = async () => {
             if (username) {
                 await fetchAndDisplayViewProfile(username);
             } else {
-                // Handle scenario where no username is provided
+                
             }
         } else {
             console.error("No 'u' parameter found in the URL.");
-            // Handle scenario where 'u' parameter is not present
+            
         }
     } else {
         console.error("No parameters found in the URL.");
-        // Handle scenario where no parameters are present
+        
     }
     break;
 
@@ -196,10 +237,14 @@ const handleLocation = async () => {
       }
       break;
     case "#logout":
-      logout();
+      doLogout();
       break;
     case "#chat":
       openChat();
+      break;
+    case "#":
+    case "#home":
+      showHome();
       break;
     case "#pongehab":
       showPongEhab();
@@ -223,59 +268,93 @@ const handleLocation = async () => {
     case '#play!':
       showGameModes();
       break;
+    case '#register':
+      handleRegister();
+      break;
     case '#pong3':
       showPong3();
       break;
-    default:
+    case '#pong4':
+      showPong4();
+      break;
+    case '#tic1':
+      showTic1();
+      break;
+    case '#tic2':
+      showTic2();
+      break;
+    case '#contact':
+      showImprint();
+      break;
+    case '#privacy-policy':
+      showPrivacyPolicy();
+      break;
+    case '#rps':
+      playRPS();
+      break;
+        default:
+          translate(currentLanguage);
       break;
   }
+  
 };
 
 
 handleLocation();
 
-
 const navToggle = document.getElementById('nav-toggle');
 const navMenu = document.querySelector('nav');
 
-const toggleNavMenu = () => {
-  if (navMenu.classList.contains('active')) {
-    //navMenu.classList.remove('active'); 
-    
-} else {
-    navMenu.classList.add('active'); 
+const showNavMenu = () => {
+  navMenu.style.display = 'block';
+};
 
-}
+
+const hideNavMenu = () => {
+  navMenu.style.display = 'none';
+};
+
+
+
+
+const toggleNavMenu = () => {
+  if (navMenu.style.display === 'none' || navMenu.style.display === '') {
+    showNavMenu();
+  } else {
+    hideNavMenu();
+  }
 };
 
 
 navToggle.addEventListener('click', toggleNavMenu);
 
-
 const route = (event) => {
     event = event || window.event;
     event.preventDefault();
-    //navToggle.click();
+    
     window.history.pushState({}, "", event.target.href);
     handleLocation();
 };
 
 
 window.onpopstate = () => {
-
     handleLocation();
-    //navToggle.click();
-    
-
+    showNavMenu();
 };
 
 
+
 function translate(lang) {
+  let currentLanguagetmp = localStorage.getItem('language');
+if (!currentLanguagetmp) {
+  currentLanguagetmp = lang || 'en';
+    localStorage.setItem('language', currentLanguagetmp);
+    currentLanguage = currentLanguagetmp;
+}
 
   fetch(`translations/${lang}.json`)
     .then(response => response.json())
     .then(translations => {
-
       Object.keys(translations).forEach(category => {
         Object.keys(translations[category]).forEach(key => {
           const element = document.getElementById(key);
@@ -293,8 +372,14 @@ translate(currentLanguage);
 
 
 function updateNavigation() {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  
+  let isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  const jwtToken = localStorage.getItem('jwtToken');
+  let checkisLoggedIn = jwtToken !== null;
+  if (!checkisLoggedIn) {
+    localStorage.setItem('isLoggedIn', 'false');
+    isLoggedIn = false;
+    window.location.href = '/#login'; 
+  }
   const navMenu = document.getElementById('nav-menu');
   navMenu.innerHTML = ''; 
   //navMenu.style.display = 'block';
@@ -322,6 +407,10 @@ navMenu.appendChild(li);
 
 }
 
+const languageSelect = document.getElementById('languageSelect');
+    if (languageSelect) {
+      languageSelect.value = currentLanguage;
+    }
 
 window.addEventListener('load', () => {
   if (localStorage.getItem('isLoggedIn') === null) {
@@ -329,5 +418,16 @@ window.addEventListener('load', () => {
   }
   updateNavigation();
 });
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 800) {
+    
+    showNavMenu();
+  } else {
+    
+    hideNavMenu();
+  }
+});
+
 
 window.route = route;

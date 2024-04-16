@@ -13,14 +13,10 @@ function showPong3() {
     let gameOver = false;
     let isGamePaused = false;
 
-    
-
-
     const paddleWidth = 10;
-
     const paddleHeight = 100; 
 
-    const user = {
+    const player1 = {
         x: 10,
         y: canvas.height / 2 - paddleHeight / 2,
         width: paddleWidth,
@@ -38,7 +34,6 @@ function showPong3() {
         score: 0
     };
 
-    // Dritter Spieler am unteren Rand
     const player3 = {
         x: canvas.width / 2 - paddleWidth / 2,
         y: canvas.height - 20,
@@ -64,29 +59,29 @@ function showPong3() {
 
     document.addEventListener("visibilitychange", function() {
         if (document.visibilityState === 'hidden') {
-            // Pausiere das Spiel
+            
             isGamePaused = true;
-            // Optional: Zeige eine Meldung an oder handle das UI entsprechend
+            
         } else {
-            // Setze das Spiel fort
+            
             isGamePaused = false;
-            // Optional: Entferne die Pausen-Meldung oder aktualisiere das UI entsprechend
+            
         }
     });
 
     function keyDownHandler(event) {
         switch(event.keyCode) {
-            case 87: // W
+            case 87: 
                 wPressed = true;
                 break;
-            case 83: // S
+            case 83: 
                 sPressed = true;
                 break;
-            case 38: // Up Arrow
+            case 38: 
                 upArrowPressed = true;
                 event.preventDefault();
                 break;
-            case 40: // Down Arrow
+            case 40: 
                 downArrowPressed = true;
                 event.preventDefault();
                 break;
@@ -95,17 +90,17 @@ function showPong3() {
 
     function keyUpHandler(event) {
         switch(event.keyCode) {
-            case 87: // W
+            case 87: 
                 wPressed = false;
                 break;
-            case 83: // S
+            case 83: 
                 sPressed = false;
                 break;
-            case 38: // Up Arrow
+            case 38: 
                 upArrowPressed = false;
                 event.preventDefault();
                 break;
-            case 40: // Down Arrow
+            case 40: 
                 downArrowPressed = false;
                 event.preventDefault();
                 break;
@@ -114,11 +109,8 @@ function showPong3() {
 
     function mouseMoveHandler(event) {
         let canvasRect = canvas.getBoundingClientRect();
-        let scaleX = canvas.width / canvasRect.width; // die Skalierung der Breite
-        let scaleY = canvas.height / canvasRect.height; // die Skalierung der Höhe
-    
-        let mouseX = (event.clientX - canvasRect.left) * scaleX; // Skaliere die Mauskoordinate X
-        // Begrenze den Paddle-Bereich innerhalb des Canvas und berücksichtige die Skalierung
+        let scaleX = canvas.width / canvasRect.width;     
+        let mouseX = (event.clientX - canvasRect.left) * scaleX; 
         player3.x = Math.max(Math.min(mouseX - (player3.width / 2), canvas.width - player3.width), 0);
     }
     
@@ -126,7 +118,7 @@ function showPong3() {
     function collisionDetect(player, ball) {
 
         if (player === player3 && (ball.y + ball.radius < player.y)) {
-            return false; // Der Ball darf unten durchgehen, wenn er nicht getroffen wird
+            return false; 
         }
         player.top = player.y;
         player.right = player.x + player.width;
@@ -148,54 +140,51 @@ function showPong3() {
         let direction = (ball.x < canvas.width / 2) ? 1 : -1;
         ball.velocityX = direction * ball.speed * Math.cos(angleRad);
         ball.velocityY = ball.speed * Math.sin(angleRad);
-        ball.speed += 0.1; // Optional: erhöhe die Geschwindigkeit bei jedem Schlägerkontakt
+        ball.speed += 0.1; 
     }
 
     function newGButton() {
         const button = document.getElementById('newGButton');
         if (button)
         {
-          button.style.display = 'block'; // Button anzeigen
+          button.style.display = 'block'; 
         button.addEventListener('click', function() {
-            location.reload(); // Die Seite neu laden für ein neues Spiel
+            location.reload(); 
         });
       }
     }
 
-    
-    const startMessage = document.getElementById('startMessage');
-
-  showStartMessageWithCountdown(5);
+    showStartMessageWithCountdown(5);
 
     function showStartMessageWithCountdown(seconds) {
     if(seconds > 0) {
-        // Zeichne die Nachricht auf dem Canvas
-        ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; // Transluzenter schwarzer Hintergrund
+        
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = "#FFF"; // Weiße Schriftfarbe
+        ctx.fillStyle = "#FFF"; 
         ctx.font = "30px Arial";
         ctx.textAlign = "center";
         ctx.fillText("Whoever gets 7 goals loses", canvas.width / 2, canvas.height / 2 - 30);
         ctx.font = "bold 50px Arial";
         ctx.fillText(seconds, canvas.width / 2, canvas.height / 2 + 30);
 
-        // Warte eine Sekunde und zeichne dann das nächste Update
+        
         setTimeout(function() {
         showStartMessageWithCountdown(seconds - 1);
         }, 1000);
     } else {
-        // Starte das Spiel, wenn der Countdown vorbei ist
+        
         gameLoop();
     }
     }
 
-    function showGameOverModall(loser) {
+    function showGameOverModal2(loser) {
         ctx.fillStyle = "white";
         ctx.font = "48px Arial";
         ctx.fillText(`${loser} lost!`, canvas.width / 4, canvas.height / 2);
         
-        // Zeige den "Neues Spiel" Button an
+        
         const newGButton2 = document.getElementById('newGButton');
         if (newGButton2)
             document.getElementById('newGButton').style.display = 'block';
@@ -204,20 +193,20 @@ function showPong3() {
 
     function showGameOver() {
 
-        // Dimme den Hintergrund
+        
         ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = "white";
         ctx.font = "48px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(gameOverMessage, canvas.width / 2, canvas.height / 2 - 100); // gameOverMessage sollte die Verlierer-Nachricht sein
+        ctx.fillText(gameOverMessage, canvas.width / 2, canvas.height / 2 - 100); 
     
     }
     
     function showGameOverModal(loser) {
         gameOverMessage = `${loser} lost!`;
-        showGameOverModall(loser);
+        showGameOverModal2(loser);
         gameOver = true;
     }
 
@@ -230,26 +219,26 @@ function showPong3() {
     function update() {
         if (gameOver) return;
     
-        // Bewegungen der vertikalen Schläger
-        if (wPressed && user.y > 0) user.y -= 8;
-        else if (sPressed && user.y < canvas.height - user.height) user.y += 8;
+        
+        if (wPressed && player1.y > 0) player1.y -= 8;
+        else if (sPressed && player1.y < canvas.height - player1.height) player1.y += 8;
         
         if (upArrowPressed && player2.y > 0) player2.y -= 8;
         else if (downArrowPressed && player2.y < canvas.height - player2.height) player2.y += 8;
         
-        // Ballbewegungen
+        
         ball.x += ball.velocityX;
         ball.y += ball.velocityY;
         
-        // Überprüfen der Wände
+        
         if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
             ball.velocityY = -ball.velocityY;
         }
         
-        // Spieler verliert einen Punkt, wenn er ein Tor kassiert
+        
         if (ball.x - ball.radius < 0) {
-            user.score++;
-            if(user.score >= 7) {
+            player1.score++;
+            if(player1.score >= 7) {
                 gameOver = true;
                 showGameOverModal('Player 1');
                 disableControls();
@@ -267,13 +256,13 @@ function showPong3() {
             }
         }
         
-        // Überprüfung für Spieler 3
-        if (ball.y + ball.radius >= canvas.height - 10) { // Anpassung, um die Position des dritten Schlägers zu berücksichtigen
+        
+        if (ball.y + ball.radius >= canvas.height - 10) { 
             if (ball.x >= player3.x && ball.x <= (player3.x + player3.width)) {
-                // Ball prallt ab, wenn er den Schläger trifft
+                
                 ball.velocityY = -ball.speed;
             } else {
-                // Spieler 3 verliert einen Punkt, wenn er ein Tor kassiert
+                
                 player3.score++;
                 if(player3.score >= 7) {
                     gameOver = true;
@@ -285,8 +274,8 @@ function showPong3() {
             }
         }
         
-        // Kollisionserkennung für die vertikalen Schläger
-        if (collisionDetect(user, ball)) handlePaddleBallCollision(user, ball);
+        
+        if (collisionDetect(player1, ball)) handlePaddleBallCollision(player1, ball);
         if (collisionDetect(player2, ball)) handlePaddleBallCollision(player2, ball);
     }
     
@@ -300,35 +289,34 @@ function showPong3() {
     }
 
     function drawScore() {
-        // Punkte für Spieler 1
+        
         ctx.fillStyle = "white";
         ctx.font = "32px Arial";
-        ctx.fillText(user.score.toString(), 20, 50); // Zeigt nur die Punktzahl an
+        ctx.fillText(player1.score.toString(), 20, 50); 
     
-        // Punkte für Spieler 2
-        ctx.fillText(player2.score.toString(), canvas.width - 140, 50); // Zeigt nur die Punktzahl an
+        
+        ctx.fillText(player2.score.toString(), canvas.width - 140, 50); 
     
-        // Punkte für Spieler 3, falls er aktiv ist
-        ctx.fillText(player3.score.toString(), canvas.width / 2 - 70, canvas.height - 20); // Zeigt nur die Punktzahl an
+        
+        ctx.fillText(player3.score.toString(), canvas.width / 2 - 70, canvas.height - 20); 
     }
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawPaddle(user.x, user.y, user.width, user.height, user.color);
+        drawPaddle(player1.x, player1.y, player1.width, player1.height, player1.color);
         drawPaddle(player2.x, player2.y, player2.width, player2.height, player2.color);
-        // Zeichnet den dritten Schläger
         drawPaddle(player3.x, player3.y, player3.width, player3.height, player3.color);
         drawBall(ball.x, ball.y, ball.radius, ball.color);
         drawScore();
         if (gameOver) {
-            showGameOver(); // Diese Funktion wird später definiert
+            showGameOver(); 
         }
 
     }
 
     function drawPaddle(x, y, width, height, color) {
         ctx.fillStyle = color;
-        ctx.fillRect(x, y, width, height); // Rechteck zeichnen
+        ctx.fillRect(x, y, width, height); 
     }
 
     function drawBall(x, y, radius, color) {

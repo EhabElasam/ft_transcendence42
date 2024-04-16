@@ -1,77 +1,54 @@
 @import url("https://fonts.googleapis.com/css?family=Work+Sans:300,600");
 
 :root {
-    --background: #212529;
+    --background: rgba(33, 37, 41, 0.4);
+    
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
-html, body {
-    height: 100%;
-    font-family: 'Press Start 2P' !important ;
-    margin-top: 1em;
-    margin-bottom: 1em;
-    background: #212529 !important;
+html {
+    font-family: 'Press Start 2P' !important;
+    background: #333841;
+    overflow: auto;
 }
 
 body {
+    font-family: 'Press Start 2P' !important;
     margin: 0;
-    background: #222;
-    font-family: "Work Sans", sans-serif;
-    font-weight: 400;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-
-main {
-    flex-grow: 1;
 }
 
 .app {
-    min-height: 95vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     background-color: #333;
     color: antiquewhite;
-    background-blend-mode: multiply;
-    background-size: cover;
-    
-    place-items: center;
-}
-
-.logo a {
-    text-decoration: none;
-    color: #ffffff;
+    width: 100%;
+    height: 100vh;
+    position: relative;
 }
 
 header {
     background: var(--background);
     text-align: center;
-    position: sticky;
+    position: absolute;
     top: 0;
     z-index: 999;
     width: 100%;
-    padding-top: 10px;
-    padding-bottom: 10px;
-
+    height: 60px;
+    border-radius: 50px;
 }
 
-footer {
-    position: sticky;
-    bottom: 0;
-    width: 100%;
-    color: aliceblue;
-    text-align: center;
-}
-
-footer a, .tw-link {
-    color: aliceblue;
+.logo a {
     text-decoration: none;
-}
-
-.tw-link{
-    font-weight: 600;
+    color: #ffffff;
 }
 
 .nav-toggle {
@@ -118,6 +95,7 @@ footer a, .tw-link {
 .nav-toggle-label span::after {
     top: 7px;
 }
+
 nav {
     position: absolute;
     text-align: left;
@@ -125,16 +103,16 @@ nav {
     left: 0;
     background: var(--background);
     width: 100%;
-    display: none; 
-    transform: scaleY(0); 
+    display: none;
+    transform: scaleY(0);
     transform-origin: top;
     transition: transform 400ms ease-in-out;
     color: #fff;
 }
 
 nav.active {
-    display: block; 
-    transform: scaleY(1); 
+    display: block;
+    transform: scaleY(1);
     color: #fff;
 }
 
@@ -168,19 +146,19 @@ nav a:active {
 }
 
 .nav-toggle:checked~nav {
-    
+
     transform: scale(1, 1);
 }
 
 .nav-toggle:checked~nav a {
     opacity: 1;
-    
+
     transition: opacity 250ms ease-in-out 250ms;
 }
 
 @media screen and (min-width: 800px) {
     .nav-toggle-label {
-        
+
         display: none;
     }
 
@@ -240,3 +218,32 @@ nav a:active {
         transform: scale(1, 1);
     }
 }
+
+.feedback-popup {
+    display: none;
+    position: fixed;
+    bottom: 60px;
+    right: 20px;
+    width: 300px;
+    background-color: rgba(249, 249, 249, 0.3);
+    border: 1px solid rgba(249, 249, 249, 0.3);
+    border-radius: 5px;
+    padding: 20px;
+  }
+  
+  .feedback-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .close {
+    align-self: flex-end;
+    cursor: pointer;
+  }
+  
+  textarea {
+    height: 100px;
+    margin-bottom: 10px;
+    background-color: rgba(249, 249, 249, 0.3);
+  }
+  

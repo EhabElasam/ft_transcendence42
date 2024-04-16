@@ -10,3 +10,7 @@ channels_redis
 python-socketio
 aiohttp
 uvicorn
+whitenoise
+django-extensions
+daphne
+pyjwt

@@ -7,10 +7,11 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./backend:/usr/src/app/
+      - ./certs:/etc/ssl/certs
     ports:
       - '8000:8000'
     env_file:
-      - ./backend/.env
+      - .env
 
   postgres:
     container_name: postgres
@@ -30,41 +31,43 @@ services:
       context: ./src/nginx
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+#      - "8080:80"
       - "8443:443"
     volumes:
       - ./frontend:/etc/frontend
+      - ./certs:/etc/nginx/ssl
     depends_on:
       - backend
 
-  prometheus:
-    container_name: prometheus
-    build: ./src/prometheus
-    image: prometheus
-    volumes:
-      - prometheus:/volumes/prometheus
-    ports:
-      - '9090:9090'
-    networks:
-      - transcendence
-    env_file:
-      - .env
-    restart: unless-stopped
-  grafana:
-    container_name: grafana
-    build: ./src/grafana
-    image: grafana
-    ports:
-      - 3000:3000
-    volumes:
-      - grafana:/volumes/grafana
-    networks:
-      - transcendence
-    env_file:
-      - .env
-    restart: unless-stopped
+  # prometheus:
+  #   container_name: prometheus
+  #   build: ./src/prometheus
+  #   image: prometheus
+  #   volumes:
+  #     - prometheus:/volumes/prometheus
+  #   ports:
+  #     - '9090:9090'
+  #   networks:
+  #     - transcendence
+  #   env_file:
+  #     - .env
+  #   restart: unless-stopped
+  # grafana:
+  #   container_name: grafana
+  #   build: ./src/grafana
+  #   image: grafana
+  #   ports:
+  #     - 3000:3000
+  #   volumes:
+  #     - grafana:/volumes/grafana
+  #   networks:
+  #     - transcendence
+  #   env_file:
+  #     - .env
+  #   restart: unless-stopped
 
 volumes:
+  cert-volumes:
   database-postgres:
   prometheus:
     name: prometheus

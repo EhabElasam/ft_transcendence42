@@ -1,4 +1,4 @@
-up: check_env
+up: check_env check_certs
 	$(eval VOLUME_PATH := $(HOME)/volumes)
 	mkdir -p $(HOME)/volumes/grafana
 	mkdir -p $(HOME)/volumes/prometheus
@@ -9,14 +9,16 @@ up: check_env
 	docker compose up
 
 
+check_certs:
+	@if [ ! -f "certs/localhost.crt" ] || [ ! -f "certs/localhost.key" ]; then \
+		echo "Generating self-signed certificates..."; \
+		mkdir -p certs; \
+		openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout certs/localhost.key -out certs/localhost.crt -subj "/C=AT/ST=W/L=Vienna/O=Pong42/OU=IT Department/CN=localhost"; \
+		echo "Certificates generated."; \
+	fi
+
 check_env:
 	@if [ ! -f ".env" ]; then \
-		if [ -f "sample.env" ]; then \
-			cp sample.env .env; \
-			echo "Copied sample.env to .env"; \
-		else \
-			echo "sample.env not found, please create it"; \
-		fi; \
 		./src/check_env.sh; \
 	fi
 
@@ -27,11 +29,11 @@ down:
 clean:
 	@docker compose down --volumes
 	@echo "Stopping and removing specific containers..."
-	@docker stop tmp-nginx tmp-backend postgres > /dev/null 2>&1 || true
-	@docker rm tmp-nginx tmp-backend postgres > /dev/null 2>&1 || true
-	@docker image rm tmp-nginx tmp-backend postgres > /dev/null 2>&1 || true
+	@docker stop pong42-nginx pong42-backend postgres > /dev/null 2>&1 || true
+	@docker rm pong42-nginx pong42-backend postgres > /dev/null 2>&1 || true
+	@docker image rm pong42-nginx pong42-backend postgres > /dev/null 2>&1 || true
 	@echo "Removing volumes associated with the containers..."
-	@VOLUMES=$$(docker volume ls -q | grep -E 'tmp-(nginx|backend|postgres)'); \
+	@VOLUMES=$$(docker volume ls -q | grep -E 'pong42-(nginx|backend|postgres)'); \
 	if [ -n "$$VOLUMES" ]; then \
 		docker volume rm $$VOLUMES > /dev/null 2>&1; \
 	else \
@@ -40,7 +42,7 @@ clean:
 	@echo "Clean-up done."
 
 
-re: down
+re: down check_env check_certs
 	docker compose up --build
 
 .PHONY: re clean up down

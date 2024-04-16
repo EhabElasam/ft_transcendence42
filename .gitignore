@@ -1,2 +1,7 @@
 .env
-
+__pycache__
+migrations
+staticfiles
+certs
+localhost.crt
+localhost.key

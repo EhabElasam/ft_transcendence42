@@ -12,7 +12,6 @@ class User(AbstractUser):
         managed = False
         db_table = 'auth_user'
 
-    # Specify custom intermediary table names to avoid clashes
     groups = models.ManyToManyField(
         Group,
         through='MyAppUserGroups',
@@ -71,7 +70,15 @@ class WaitingPlayer(models.Model):
 class Message(models.Model):
     name = models.CharField(max_length=100)
     text = models.TextField()
+    recipient = models.CharField(max_length=100, blank=True, null=True)  # New field to store recipient
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'{self.name}: {self.text}'
+
+class Feedback(models.Model):
+    feedback_text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.feedback_text
