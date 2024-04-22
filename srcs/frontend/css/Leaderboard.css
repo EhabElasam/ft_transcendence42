@@ -1,0 +1,71 @@
+.table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  padding: 1vh 1vw;
+  text-align: left;
+  margin: 0; /* Removed duplicate margin rule */
+}
+
+th {
+  font-weight: bold;
+}
+
+.c-media {
+  display: flex;
+  align-items: center;
+}
+
+th span {
+  font-weight: normal;
+}
+
+#pagination-container {
+  margin-left: auto; /* Adjusted margin to auto for central alignment */
+  margin-right: auto; /* Adjusted margin to auto for central alignment */
+}
+
+#leaderboard-body + tr > td > div {
+  margin: 0;
+  position: static;
+}
+
+#page {
+  margin-right: 5%;
+}
+
+.progress-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.progress-bar-container {
+  width: 100%;
+  max-width: 90%; /* Adjust as needed */
+  margin: 0 auto; /* Center alignment for the progress bar container */
+}
+
+.progress-bar {
+  width: 100%;
+}
+
+.progress-content {
+  margin-left: 1rem; /* Adjust as needed to create space between content and progress bar */
+}
+
+@media only screen and (max-width: 600px) {
+  table th, table td {
+    padding: 0.5em;
+    font-size: 0.8em;
+  }
+}
+

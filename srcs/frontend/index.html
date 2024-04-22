@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="./src/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <title>Pong42</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/Chat.css" />
+  <link rel="stylesheet" href="./css/footer.css" />
+  <link rel="stylesheet" href="./css/AboutUs.css" />
+  <link rel="stylesheet" href="./css/Home.css" />
+  <link rel="stylesheet" href="./css/Leaderboard.css" />
+  <link rel="stylesheet" href="./css/Login.css" />
+  <link rel="stylesheet" href="./css/Privacy.css" />
+  <link rel="stylesheet" href="./css/Profile.css" />
+  <link rel="stylesheet" href="./css/ViewProfile.css" />
+  <link rel="stylesheet" href="./css/PongGame.css" />
+  <link rel="stylesheet" href="./css/PongEhab.css" />
+  <link rel="stylesheet" href="./css/PlayersRemote2.css" />
+  <link rel="stylesheet" href="./css/playerai1.css" />
+  <link rel="stylesheet" href="./css/pong3.css" />
+  <link rel="stylesheet" href="./css/pong4.css" />
+  <link rel="stylesheet" href="./css/tournament.css" />
+  <link rel="stylesheet" href="./css/tic1.css" />
+  <link rel="stylesheet" href="./css/tic2.css" />
+  <link rel="stylesheet" href="./css/Register.css" />
+  <link rel="stylesheet" href="./css/Navbar.css" />
+  <link rel="stylesheet" href="./css/player3d1.css" />
+  <link rel="stylesheet" href="./css/rps.css" />
+
+   <!-- Include Bootstrap CSS -->
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+
+
+   <!-- Include Bootstrap Icons CSS -->
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+
+
+   
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+   
+<script src="./js/Home.js"></script>
+<script src="./js/Login.js"></script>
+<script src="./js/Register.js"></script>
+<script src="./js/Chat.js"></script>
+<script src="./js/chatselect.js"></script>
+<script src="./js/Profile.js"></script>
+<script src="./js/Leaderboard.js"></script>
+<script src="./js/Logout.js"></script>
+<script src="./js/AboutUs.js"></script>
+<script src="./js/Contact.js"></script>
+<script src="./js/Privacy.js"></script>
+<script src="./js/pongehab.js"></script>
+<script src="./js/ponggame.js"></script>
+<script src="./js/player3d1.js"></script>
+<script src="./js/playerai1.js"></script>
+<script src="./js/playersremote2.js"></script>
+<script src="./js/selectgame.js"></script>
+<script src="./js/pong3.js"></script>
+<script src="./js/pong4.js"></script>
+<script src="./js/tic1.js"></script>
+<script src="./js/tic2.js"></script>
+<script src="./js/tournament.js"></script>
+<script src="./js/ViewProfile.js"></script>
+<script src="./js/rps.js"></script>
+<script src="./js/manage2fa.js"></script>
+
+
+
+</head>
+<body>
+
+  <header>
+    <h1 class="logo" ><a onclick="route()" class="nav-item" href="/#">  Pong42</a></h1>
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+    <nav>
+      <ul id="nav-menu">
+        <li><a onclick="route()" href="/#" class="nav-item" id="hometitle">Home</a></li>
+        <li><a onclick="route()" href="/#login" class="nav-item" id="logintitle">Login</a></li>
+        
+      </ul>
+    </nav>
+    
+    
+    <label for="nav-toggle" class="nav-toggle-label">
+      <span><img src="./src/logo.png"  width="10%" height="10%" style="position: absolute;">
+        </span>
+    </label>
+
+   
+    <div>
+      <select class="selectpicker" id="languageSelect" data-width="fit" onchange="changeLanguage(this.value)" style="color: #ffffff;background-color: #333333; width: 10vw;">
+        <option value="en">English</option>
+        <option value="at">Deutsch</option>
+        <option value="tr">Türkçe</option>
+        <option value="bg">Български</option>
+        <option value="eg">العربية</option>
+        <option value="fr">Français</option>
+        <option value="es">Español</option>
+        <option value="it">Italiano</option>
+        <option value="ua">Українська</option>
+        <option value="ru">Русский</option>
+        <option value="pt">Português</option>
+        <option value="zh">简体中文</option>
+      </select>
+      
+      
+    </div>
+    
+  </header>
+  <script>
+    window.addEventListener('beforeunload', function (e) {
+      sessionStorage.setItem('isSubPageRefreshed', 'true');
+    });
+
+    window.addEventListener('load', function (e) {
+      const isSubPageRefreshed = sessionStorage.getItem('isSubPageRefreshed');
+      if (isSubPageRefreshed === 'true') {
+        sessionStorage.removeItem('isSubPageRefreshed');
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/') {
+          window.location.href = '/';
+        }
+      }
+    });
+  </script>
+  <div class="app" id="app"></div>
+
+  <div id="feedback-popup" class="feedback-popup">
+    <div class="feedback-content">
+      <span class="close" onclick="closePopup()">&times;</span>
+      <h2>Feedback</h2>
+      <textarea id="feedback-text" placeholder="Enter your feedback here..."></textarea>
+      <button onclick="submitFeedback()">Submit</button>
+    </div>
+  </div>
+  <footer class="footer-container">
+    <div class="footer-links">
+      <a onclick="showPrivacyPolicy();" href="/#privacy-policy" class="footer-link privacy-link">
+        <i class="bi bi-lock"></i> <span class="footer-link-text" id="privacyPolicy">Privacy Policy></span> </a>
+      <a onclick="showImprint();" href="/#contact" class="footer-link privacy-link">
+        <i class="bi bi-info-circle"></i> <span class="footer-link-text" id="impressum">Impressum</span> </a>
+      <a onclick="showAboutUsPage();" href="/#aboutus" class="footer-link about-link text-right">
+        <i class="bi bi-people"></i> <span class="footer-link-text" id="aboutUs">About Us</span> </a>
+    </div>
+  </footer>
+
+  <script src="./js/router.js" defer></script>
+<script>
+  
+
+  
+  
+  function submitFeedback() {
+    var feedbackText = document.getElementById("feedback-text").value;
+
+    if (!feedbackText.trim()) return;
+
+    feedbackText = feedbackText.substring(0, 300);
+
+
+    var xhr = new XMLHttpRequest();
+
+    xhr.open("POST", `/api/feedback/`, true);
+
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.setRequestHeader("X-CSRFToken", csrfToken);
+
+    xhr.onload = function () {
+        if (xhr.status === 200) {
+            console.log("Feedback submitted successfully.");
+        } else {
+            console.error("Error submitting feedback:", xhr.statusText);
+        }
+    };
+
+    var data = JSON.stringify({ feedback: feedbackText });
+
+    xhr.send(data);
+
+    closePopup();
+}
+
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+</script>
+  
+  
+  </body>
+  </html>
+
+  

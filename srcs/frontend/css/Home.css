@@ -1,0 +1,108 @@
+@keyframes zoomInOut {
+  0% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.35); 
+  }
+  100% {
+    transform: scale(1.2); 
+  }
+}
+
+.welcome-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  gap: 5vh;
+  background-image: url('../src/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  animation: zoomInOut 10s infinite alternate;
+}
+
+.welcome-message {
+  text-align: center;
+  font-size: 4vw;
+  animation: rainbow 8s infinite, fadeIn 1s ease-out;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); 
+  -webkit-text-stroke: 0.5px black; 
+  color: rgba(255, 255, 255, 0.5); 
+  word-wrap: break-word; 
+  height: auto; 
+  width: 60%;
+}
+
+@keyframes rainbow {
+  0%      { color: rgba(255, 0, 0, 0.5); } 
+  16.67%  { color: rgba(255, 127, 0, 0.5); } 
+  33.33%  { color: rgba(255, 255, 0, 0.5); } 
+  50%     { color: rgba(0, 255, 0, 0.5); }
+  66.67%  { color: rgba(0, 0, 255, 0.5); }
+  83.33%  { color: rgba(75, 0, 130, 0.5); } 
+  100%    { color: rgba(138, 43, 226, 0.5); } 
+}
+
+.ping-pong-ball {
+  position: absolute;
+  width: 2vw;
+  height: 2vw;
+  background-color: white;
+  border-radius: 50%;
+  animation: bounce 0.6s infinite alternate;
+  left: 50%; 
+  top: 50%; 
+  transform: translate(-50%, -50%); 
+}
+
+
+@keyframes bounce {
+  from {
+    transform: translateY(7vh);
+  }
+  to {
+    transform: translateY(-43vh);
+  }
+}
+
+.pong-table {
+  width: 30%; 
+  height: 20vh; 
+  max-width: 45vw; 
+  max-height: 35vh; 
+  background: rgba(34, 34, 34, 0.8); 
+  border: 1px solid #fff;
+  border-style: dotted;
+  position: relative;
+  padding: 1% 0; 
+}
+
+.paddle-left,
+.paddle-right {
+  width: 1.5vw; 
+  height: 7vh; 
+  background: #fff;
+  position: absolute;
+  top: calc(50% - 3.5vh); 
+}
+
+.paddle-left {
+  left: 2vw; 
+}
+
+.paddle-right {
+  right: 2vw; 
+}
+
+@media screen and (max-width: 768px) {
+  .welcome-page {
+    gap: 3vh; 
+  }
+  
+  .pong-table {
+    visibility: hidden; 
+  }
+}

@@ -1,0 +1,37 @@
+<div class="viewprofile-container">
+  <button id="goBackButton" class="viewprofile-button back-button" onclick="window.history.back()">
+    <i class="bi bi-arrow-left"></i> <span id="backbutton">Back</span>
+  </button>
+  
+  <h1 class="viewprofile-title">
+    <span id="profile-title">Pong Master</span>
+    <span id="nicknameadr2"></span>  
+    <div id="statusIndicator" class="status-indicator"></div> 
+    <div class="avatar-preview">
+      <img class="profile-pic" src="" width="200px" height="200px" alt="Profile Picture">
+    </div>
+  </h1>
+
+  <div class="info-sections">
+    
+    <div class="view-info-section">
+   
+      <h2 class="view-info-header"><span id="scorelbl">Score</span>: <span id="scoreadr"></span></h2>
+    </div>
+    
+    <div class="view-info-section">
+      <span class="view-info-header" id="totalgames">Games Played</span>: <span id="gamesPlayed">0</span>
+       &nbsp; <span class="view-info-header" id="WinningRatelbl">Winning Rate</span>: <span id="winningRate">0</span>
+    </div>
+    
+  </div>
+
+  <div class="buttons">
+    <button id="addfriend" class="viewprofile-button">Add as friend</button>
+    <button id="removefriend" class="viewprofile-button">Remove from friends</button>
+    <button id="blockuser" class="viewprofile-button">Block user</button>
+    <button id="unblockuser" class="viewprofile-button">Unblock user</button>
+  </div>
+  
+  <div id="messageContainer" class="message-container"></div>
+</div>
