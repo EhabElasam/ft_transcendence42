@@ -15,7 +15,7 @@ import uuid
 import os
 import json
 from .forms import UserRegistrationForm
-from .models import Tournament, User, Player, WaitingPlayer, Message, UserProfile, Feedback, Achievement, MyAppUserGroups, MyAppUserPermissions, Channel
+from .models import Tournament, User, Player, WaitingPlayer, Message, UserProfile, Feedback, Achievement, MyAppUserGroups, MyAppUserPermissions, Channel, GameStats
 from django.utils import timezone
 from django.db import IntegrityError
 from django.utils.html import escape
@@ -40,6 +40,8 @@ from urllib.parse import quote
 from django.db.models import Case, When
 from pyotp import TOTP
 from django.db.models import F, ExpressionWrapper, FloatField
+from django.db import IntegrityError
+
 
 token_obtain_pair_view = TokenObtainPairView.as_view()
 token_refresh_view = TokenRefreshView.as_view()
@@ -121,7 +123,7 @@ def remove_friend(request):
     except KeyError:
         return JsonResponse({'message': "Invalid or missing user_id in JWT token."}, status=401)
     except Exception as e:
-        return JsonResponse({'message': str(e)}, status=500)
+        return JsonResponse({'message': str(e)}, status=401)
 
 
 def add_friend(request):
@@ -165,29 +167,40 @@ def add_friend(request):
     
 def get_friends(request):
     try:
-        
         token = request.headers.get('Authorization', '').split('Bearer ')[-1]
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
         
-        
         user = User.objects.get(pk=user_id)
         
-        
         requested_username = request.GET.get('username')
-        
         
         if requested_username:
             requested_user = User.objects.get(username=requested_username)
             friends = requested_user.friends.all()
         else:
-            
             friends = user.friends.all()
         
+        active_sessions = Session.objects.filter(expire_date__gte=timezone.now() - timedelta(minutes=42))
+        online_user_ids = set()
         
-        friend_list = [{'username': friend.username, 'nickname': friend.nickname, 'image_link': friend.image_link} for friend in friends]
+        for session in active_sessions:
+            user_id = session.get_decoded().get('_auth_user_id')
+            if user_id:
+                online_user_ids.add(user_id)
+        friend_list = []
         
+        for friend in friends:
+            is_online = str(friend.id) in online_user_ids
+            friend_info = {
+                'username': friend.username,
+                'nickname': friend.nickname,
+                'image_link': friend.image_link,
+                'status': 'online' if is_online else 'offline'
+            }
+            friend_list.append(friend_info)
         return JsonResponse({'friends': friend_list})
+    
     except jwt.ExpiredSignatureError:
         return JsonResponse({'error': 'JWT token expired'}, status=401)
     except jwt.InvalidTokenError:
@@ -196,7 +209,6 @@ def get_friends(request):
         return JsonResponse({'error': 'User not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-
 def unblock_user(request):
     try:
         token = request.headers.get('Authorization', '').split('Bearer ')[-1]
@@ -234,7 +246,7 @@ def unblock_user(request):
     except KeyError:
         return JsonResponse({'message': "Invalid or missing user_id in JWT token."}, status=401)
     except Exception as e:
-        return JsonResponse({'message': str(e)}, status=500)
+        return JsonResponse({'message': str(e)}, status=401)
 
 def block_user(request):
     try:
@@ -598,17 +610,26 @@ def proxy_viewb(request):
         email = user_data.get('email')
         image_data = user_data.get('image', {})
         image_link = image_data.get('versions', {}).get('medium', image_data.get('link'))
-
+        
         
         try:
             user = User.objects.get(username=login)
+            if not user.is_oauth_user: 
+                redirect_url = f'https://pong42.vercel.app/#login?m=oauth'
+                return redirect(redirect_url)
+                #return JsonResponse({'error': 'OAuth registration is not allowed for existing users'}, status=400)
         except User.DoesNotExist:
-            
-            user = User.objects.create_user(username=login, email=email)
-
-            user.nickname = user_data.get('nickname', user.username)
-            user.image_link = image_link
-            user.save()
+            try:
+                user = User.objects.get(email=email)
+                if not user.is_oauth_user: 
+                    redirect_url = f'https://pong42.vercel.app/#login?m=oauth'
+                    return redirect(redirect_url)
+            except User.DoesNotExist:
+                user = User.objects.create_user(username=login, email=email)
+                user.nickname = user_data.get('nickname', user.username)
+                user.image_link = image_link
+                user.is_oauth_user = True
+                user.save()
 
         token = AccessToken.for_user(user)
         encoded_token = str(token)
@@ -658,13 +679,22 @@ def proxy_viewc(request):
         
         try:
             user = User.objects.get(username=login)
+            if not user.is_oauth_user: 
+                redirect_url = f'/#login?m=oauth'
+                return redirect(redirect_url)
         except User.DoesNotExist:
-            
-            user = User.objects.create_user(username=login, email=email)
+            try:
+                user = User.objects.get(email=email)
+                if not user.is_oauth_user: 
+                    redirect_url = f'/#login?m=oauth'
+                    return redirect(redirect_url)
+            except User.DoesNotExist:
+                user = User.objects.create_user(username=login, email=email)
+                user.nickname = user_data.get('nickname', user.username)
+                user.image_link = image_link
+                user.is_oauth_user = True
+                user.save()
 
-            user.nickname = user_data.get('nickname', user.username)
-            user.image_link = image_link
-            user.save()
 
         token = AccessToken.for_user(user)
         encoded_token = str(token)
@@ -911,15 +941,16 @@ def get_csrf_token(request):
 def register(request):
     if request.method == 'POST':
         try:
-            username2 = request.POST.get('username')
+            username = request.POST.get('username')
             email = request.POST.get('email')
             password = request.POST.get('password')
             confirm_password = request.POST.get('confirm_password')
 
-            if not username2 or not email or not password or not confirm_password:
+            # Input validation
+            if not all([username, email, password, confirm_password]):
                 return JsonResponse({"error": "All fields are required."}, status=400)
 
-            if not re.match(r'^[\w-]+$', username2):
+            if not re.match(r'^[\w-]+$', username):
                 return JsonResponse({"error": "Username can only contain alphanumeric characters, underscores, and hyphens."}, status=400)
 
             if not re.match(r'^[\w\.-]+@[\w\.-]+$', email):
@@ -934,10 +965,11 @@ def register(request):
             if not any(char.isupper() for char in password):
                 return JsonResponse({"error": "Password must contain at least one uppercase letter."}, status=400)
 
-            if not all(char.isalnum() or char in ['_', '-'] for char in username2):
+            if not all(char.isalnum() or char in ['_', '-'] for char in username):
                 return JsonResponse({"error": "Username can only contain alphanumeric characters, underscores, and hyphens."}, status=400)
 
-            if User.objects.filter(username=username2).exists():
+            # Check for existing username and email
+            if User.objects.filter(username=username).exists():
                 return JsonResponse({"error": "Username already exists. Please choose a different username."}, status=400)
 
             if User.objects.filter(email=email).exists():
@@ -946,18 +978,19 @@ def register(request):
             if password != confirm_password:
                 return JsonResponse({"error": "Passwords do not match. Please make sure your passwords match."}, status=400)
 
-            user = User.objects.create_user(username=username2, nickname=username2, email=email, password=password, score=0)
-            user.nickname = username2
+            # Create user
+            user = User.objects.create_user(username=username, email=email, password=password, score=0)
+            user.nickname = username
+            user.is_oauth_user = False
             user.save()
             
             return JsonResponse({"message": "Registration successful. You can now log in."}, status=200)
 
-        except Exception as e:
+        except IntegrityError:
             return JsonResponse({"error": "An error occurred while registering. Please try again later."}, status=400)
 
     else:
-        return render(request, 'registration/register.html')
-    
+        return JsonResponse({"error": "Invalid request method."}, status=400)
 
 def login_view(request):
     try:
@@ -1026,7 +1059,7 @@ waiting_queue = []
 
 
 def home(request):
-    return render(request, 'frontend/index.html')
+    return render(request, '404.html', status=404)
 
 def custom_404(request, exception):
     return render(request, '404.html', status=404)
@@ -1110,6 +1143,7 @@ def manage_profile(request):
             MyAppUserPermissions.objects.filter(user=user).delete()
             UserProfile.objects.filter(user=user).delete()
             WaitingPlayer.objects.filter(user=user).delete()
+            GameStats.objects.filter(user=user).delete()
 
             user.delete()
             return JsonResponse({'message': 'Profile deleted successfully'})

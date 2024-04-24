@@ -176,19 +176,16 @@ function showPlayerAi1Page() {
         async function update() {
             if (gameOver || isGamePaused) return;
             
+
             if (wPressed && player1.y > 0) player1.y -= 8;
             if (sPressed && (player1.y + player1.height) < canvas.height) player1.y += 8;
-        
-            let cpuSpeed = 0.2;
+
             CPU.y += (ball.y - (CPU.y + CPU.height / 2)) * cpuSpeed;
             CPU.y = Math.max(Math.min(CPU.y, canvas.height - CPU.height), 0);
         
             ball.x += ball.velocityX;
             ball.y += ball.velocityY;
-        
-            /* if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
-                ball.velocityY = -ball.velocityY;
-            } */
+
             if (ball.y - ball.radius < 0) {
                 ball.velocityY = Math.abs(ball.velocityY);
             } else if (ball.y + ball.radius > canvas.height) {

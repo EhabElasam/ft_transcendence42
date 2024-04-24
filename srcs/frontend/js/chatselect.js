@@ -10,12 +10,11 @@ function populateChannelDropdown(channels) {
       dropdown.appendChild(option);
     });
 
-    const createOption = document.createElement('option');
-    createOption.value = 'new';
-    createOption.textContent = 'Create New Channel';
-    dropdown.appendChild(createOption);
-
-    dropdown.value = 'new';
+    // const createOption = document.createElement('option');
+    // createOption.value = 'new';
+    // createOption.textContent = 'Create New Channel';
+   // dropdown.appendChild(createOption);
+    //dropdown.value = 'new';
   }
 }
 
@@ -125,6 +124,7 @@ function chatSelect() {
   const updateNicknameButton = document.getElementById('updateNicknameButton');
   if (userInfo.nickname && nicknameInput) {
     nicknameInput.value = userInfo.nickname;
+    
   }
 
   if (dropdown) {

@@ -6,7 +6,7 @@ const routes = {
   "#login": "/views/login.html",
   "#register": "/views/register.html",
   "#play!": "/views/selectgame.html",
-  "#chat": "/views/chatselect.html",
+  "#chat": "/views/chat.html",
   "#leaderboard": "/views/leaderboard.html",
   "#profile": "/views/profile.html",
   "#privacy-policy": "/views/privacy.html",
@@ -26,9 +26,23 @@ const routes = {
   "#tournament": "/views/tournament.html",
   "#viewprofile": "/views/viewprofile.html",
   "#rps" : "/views/rps.html",
-  "#chatselect" : "/views/chat.html",
+  "#chatselect" : "/views/chatselect.html",
   "#manage2fa" : "/views/manage2fa.html",
 };
+
+
+let msgReg ;
+const hashParamsString2 = window.location.hash.substring(1); // Remove the leading #
+const paramsIndex2 = hashParamsString2.indexOf('?');
+
+if (paramsIndex2 !== -1) {
+    const paramsString2 = hashParamsString2.substring(paramsIndex2 + 1);
+    const hashParams = new URLSearchParams(paramsString2);
+
+    if (hashParams && hashParams.has('m')) {
+        msgReg = hashParams.get('m');
+    }
+}
 
 let csrfToken;
 function getBackendURL() {
@@ -78,7 +92,7 @@ function closePopup() {
 }
 //showPopup();
 const csrfCookieName = 'csrftoken';
-
+let userNickname = localStorage.getItem('userNickname');
 function setCSRFCookie(csrfToken) {
   document.cookie = `${csrfCookieName}=${csrfToken}; path=/`;
 }
@@ -215,16 +229,13 @@ function translateKey(key) {
           translation = translation[part];
         } else {
           
-          //reject(new Error(`Translation for key '${key}' not found`));
           return;
         }
       }
-  
-      
+
       resolve(translation);
     } else {
       
-      //reject(new Error(`Translations for language '${lang}' not found in the cache`));
       return;
     }
   });
@@ -268,10 +279,8 @@ const handleLocation = async () => {
       }
       break;
     
-      case "#viewprofile":
+    case "#viewprofile":
     const hashParamsString = window.location.hash.substring(1);
-
-    
     const paramsIndex = hashParamsString.indexOf('?');
     if (paramsIndex !== -1) {
         const paramsString = hashParamsString.substring(paramsIndex + 1);
@@ -308,10 +317,10 @@ const handleLocation = async () => {
       doLogout();
       break;
     case "#chat":
-      chatSelect();
+      openChat();
       break;
     case '#chatselect':
-      openChat();
+      chatSelect();
       break;
     case "#":
     case "#home":
@@ -350,19 +359,18 @@ const handleLocation = async () => {
     case '#tic1':
       showTic1();
       break;
+    case '#login':
+      
+          await handleLogin(msgReg);
+          
+        break;
     case '#tic2':
       showTic2();
       break;
     case '#tournament':
       const tournamentHtml = await fetch(routes[path]).then((data) => data.text());
       document.getElementById("app").innerHTML = tournamentHtml;
-      const playerCount = prompt("How many players will there be in the tournament? Enter 4 or 8:", "4");
-      const validCounts = ["4", "8"];
-      if (validCounts.includes(playerCount)) {
-          startTournament(parseInt(playerCount, 10));
-      } else {
-          alert("Invalid number of players. Please refresh and enter either 4 or 8.");
-      }
+      askPlayerCount();
       break;
     case '#contact':
       showImprint();

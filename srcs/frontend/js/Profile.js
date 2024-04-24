@@ -14,6 +14,14 @@ function isLocalDeployment() {
 
 async function uploadImage(imageFile) {
     try {
+        if (!imageFile.type.startsWith('image/')) {
+            throw new Error('Only image files are accepted');
+        }
+        const maxSize = 5 * 1024 * 1024; 
+        if (imageFile.size > maxSize) {
+            throw new Error('Image size exceeds the maximum allowed limit (5MB)');
+        }
+
         if (isLocalDeployment()) {
             alert("Image uploads are only supported on local deployments. They are not supported on Azure (yet).");
         }
@@ -42,6 +50,7 @@ async function uploadImage(imageFile) {
         throw new Error('Failed to upload image');
     }
 }
+
 
 async function fetchProfileData() {
     try {
@@ -83,8 +92,7 @@ async function updateProfile(data) {
             }
 
             formData.append('nickname', data.nickname);
-            document.getElementById('nicknameadr').textContent = data.nickname;
-            localStorage.setItem('userNickname', data.nickname);
+            
         }
 
         if (data.image) {
@@ -136,16 +144,24 @@ async function fetchAndDisplayFriends() {
 
             if (friendListElement) {
                 friendListElement.innerHTML = '';
-
+                
                 friends.forEach(friend => {
                     const friendElement = document.createElement('div');
                     friendElement.classList.add('friend');
                     friendElement.style.marginBottom = '10px';
+
+                    // Create an element to display friend's online status
+                    const statusIndicator = document.createElement('div');
+                    statusIndicator.classList.add('status-indicator');
+                    statusIndicator.style.backgroundColor = friend.status === 'online' ? 'green' : 'gray';
+                    statusIndicator.title = friend.status === 'online' ? 'Online' : 'Offline';
+                    friendElement.appendChild(statusIndicator);
+
                     const friendLink = document.createElement('a');
                     friendLink.href = `/#viewprofile?u=${friend.username}`;
                     friendLink.textContent = friend.nickname ;
                     friendLink.classList.add('bn');
-                    
+
                     const profileImage = document.createElement('img');
                     profileImage.src = friend.image_link ? friend.image_link : './src/emptyavatar.jpeg';
                     profileImage.alt = `${friend.username}'s profile image`;
@@ -170,6 +186,7 @@ async function fetchAndDisplayFriends() {
             displayErrorMessage(response.message);
     }
 }
+
 
 async function fetchAndDisplayAchievements() {
     try {
@@ -314,6 +331,10 @@ async function fetchAndDisplayProfile() {
                 if (newNickname !== null && newNickname.trim() !== "") {
                     try {
                         await updateProfile({ nickname: newNickname });
+                        userNickname = newNickname;
+                        if (document.getElementById('nicknameadr'))
+                            document.getElementById('nicknameadr').textContent = newNickname;
+                        localStorage.setItem('userNickname', newNickname);
                         await fetchLeaderboardData();
                     } catch (error) {
                         if (error && error.message)

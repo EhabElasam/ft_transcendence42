@@ -12,6 +12,9 @@ const MAX_MESSAGE_LENGTH = 200;
 let storedMessages;
 let msgerChat;
 
+let userNickname2 = localStorage.getItem('userNickname') || "user42";
+
+
 async function addfriend(username) {  
     try {
         let jwtToken = localStorage.getItem('jwtToken');
@@ -45,11 +48,11 @@ function toggleSocketConnection() {
         socket = getWebSocket();
         document.getElementById('msgDisconnect').textContent = 'Disconnect';
     } else {
-        if (socket && socket.readyState === WebSocket.CLOSED) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
             console.log('WebSocket disconnected.');
             const leftMessage = {
                 text: 'left the chat',
-                name: localStorage.getItem('userNickname') || localStorage.getItem('userLogin') || "user42"
+                name: userNickname2 || localStorage.getItem('userNickname')  || "user42"
             };
             sendMessage(leftMessage);
             setTimeout(function () {
@@ -77,10 +80,11 @@ function getWebSocket() {
 
         socket.addEventListener('open', () => {
             console.log('WebSocket connection established.');
-            const userNickname = localStorage.getItem('userNickname') || localStorage.getItem('userLogin') || "user42";
+            if (!userNickname2 || userNickname2 === 'null' || userNickname2 === 'undefined' || userNickname2 === 'Anonymous')
+                userNickname2 = localStorage.getItem('userNickname')  || "user42";
             const joinMessage = {
                 text: 'joined the chat',
-                name: userNickname
+                name: userNickname2
             };
             sendMessage(joinMessage);
             
@@ -126,7 +130,7 @@ function sendMessage(message) {
                 showNotification("Reconnected. Message sent successfully.", true);
                 const joinMessage3 = {
                     text: 'joined the chat',
-                    name: localStorage.getItem('userNickname') || localStorage.getItem('userLogin') || "user42"
+                    name: userNickname2 || localStorage.getItem('userNickname')  || "user42"
                 };
                 socket.send(JSON.stringify(joinMessage3));
                 socket.send(JSON.stringify(message));
@@ -155,7 +159,7 @@ function displayMessage(message) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('msg');
 
-    const isCurrentUser = message.name === (localStorage.getItem('userNickname') || localStorage.getItem('userLogin') || "user42");
+    const isCurrentUser = message.name === (userNickname2 || localStorage.getItem('userNickname')  || "user42");
     const alignRight = isCurrentUser ? 'right' : 'left';
     messageElement.classList.add(isCurrentUser ? 'right-msg' : 'left-msg');
     messageElement.classList.add('msg-bubble');
@@ -170,9 +174,6 @@ function displayMessage(message) {
             </div>
         `;
         updateOnlineUsers();
-        // if (!isCurrentUser) {
-        //     playNotificationSound();
-        //}
     } else if (messageElement && message && message.text && message.text.includes("left the chat")) {
         messageElement.innerHTML = `
             <div class="msg-info" style="text-align: ${alignRight};">
@@ -181,24 +182,28 @@ function displayMessage(message) {
             </div>
         `;
         updateOnlineUsers();
-        // if (!isCurrentUser) {
-        //     playNotificationSound();
-        // }
     } else {
-        const messageBubble = document.createElement('div');
-        messageBubble.classList.add('msg', isCurrentUser ? 'right-msg' : 'left-msg', 'msg-bubble');
-        messageBubble.textContent = escapeHTML(message.text);
+        const recipient = message.recipient || '#General';
+        // Check if the message is for general chat or the user's nickname
+        if (recipient === '#General' || recipient === null || recipient === undefined || recipient === userNickname2) {
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('msg', isCurrentUser ? 'right-msg' : 'left-msg', 'msg-bubble');
+            messageBubble.textContent = escapeHTML(message.text);
 
-        const messageInfo = document.createElement('div');
-        messageInfo.classList.add('msg-info');
-        messageInfo.style.textAlign = alignRight;
-        messageInfo.innerHTML = `
-            <span class="msg-info-name">${escapeHTML(senderName)}</span>
-            <span class="msg-info-time">${formattedCreatedAt}</span>
-        `;
+            const messageInfo = document.createElement('div');
+            messageInfo.classList.add('msg-info');
+            messageInfo.style.textAlign = alignRight;
+            messageInfo.innerHTML = `
+                <span class="msg-info-name">${escapeHTML(senderName)}</span>
+                <span class="msg-info-time">${formattedCreatedAt}</span>
+            `;
 
-        messageElement.appendChild(messageInfo);
-        messageElement.appendChild(messageBubble);
+            messageElement.appendChild(messageInfo);
+            messageElement.appendChild(messageBubble);
+        } else if (recipient !== userNickname2) {
+            // Ignore private messages intended for other recipients
+            return;
+        }
     }
 
     if (msgerChat)
@@ -206,6 +211,7 @@ function displayMessage(message) {
 
     saveMessageToLocal(message);
 }
+
 
 function playNotificationSound() {
     if (Audio && typeof Audio === 'function') {
@@ -239,6 +245,8 @@ function openChat() {
         msgDisconnect.addEventListener('click', toggleSocketConnection);
     }
 
+    if (messageInput)
+    {
     messageInput.addEventListener('keypress', function (e) {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -252,16 +260,14 @@ function openChat() {
             sendMessageFromInput();
         }
     });
-
+}
     socket = getWebSocket();
     if (msgerChat.childElementCount === 0) {
         storedMessages = JSON.parse(localStorage.getItem('chatMessages')) || [];
         storedMessages.forEach(message => displayMessage(message));
     }
 
-    if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'requestOnlineUsers' }));
-    }
+    
     updateOnlineUsers();
 
 }
@@ -289,7 +295,7 @@ function sendMessageFromInput() {
     let recipient = recipientName ? recipientName : '#General';
 
     const newMessage = {
-        name: localStorage.getItem('userNickname') || localStorage.getItem('userLogin') || "user42",
+        name: userNickname2 || localStorage.getItem('userNickname') || "user42",
         recipient: recipient,
         text: inputText,
     };
@@ -422,7 +428,7 @@ async function updateOnlineUsers() {
 
 function sendMessageToUser(nickname, message) {
     const newMessage = {
-        name: localStorage.getItem('userNickname') || localStorage.getItem('userLogin') || "user42",
+        name: userNickname2 || localStorage.getItem('userNickname')  || "user42",
         recipient: nickname,
         text: message,
     };

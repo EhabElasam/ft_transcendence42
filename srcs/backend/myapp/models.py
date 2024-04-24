@@ -9,6 +9,7 @@ class User(AbstractUser):
     blocked_users = models.ManyToManyField('self', symmetrical=False, related_name='blocked_by', blank=True) 
     two_factor_enabled = models.BooleanField(default=False)
     activation_code = models.CharField(max_length=255, blank=True, null=True)
+    is_oauth_user = models.BooleanField(default=True)
     
     class Meta:
         managed = False
@@ -102,3 +103,13 @@ class Channel(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class GameStats(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    opponent = models.CharField(max_length=100)  # Name of the opponent or "CPU"
+    win = models.BooleanField()  # True if the user won, False if lost
+    date_time_played = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.user.username} vs. {self.opponent} - {"Won" if self.win else "Lost"}'

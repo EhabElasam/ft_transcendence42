@@ -1,4 +1,13 @@
-async function handleLogin() {
+async function handleLogin(msg) {
+    translate(currentLanguage);
+if (msgReg &&msgReg === "oauth")
+    msgReg = "Error: User already exists. Oauth login is not allowed.";
+if (msgReg &&msgReg === "success")
+    msgReg = "Registration successful. You can now login.";
+if (msg && msg === "oauth")
+    msg = "Error: User already exists. Oauth login is not allowed.";
+if (msg && msg === "success")
+    msg = "Registration successful. You can now login.";
 
 async function check2FACode(username, code) {
     try {
@@ -106,6 +115,9 @@ async function check2FACode(username, code) {
                     if ('userLogin' in data) {
                         localStorage.setItem("userLogin", data.userLogin);
                     }
+                    if ('userNickname' in data) {
+                        localStorage.setItem("userNickname", data.userLogin);                       
+                    }
 
                     setTimeout(() => {
                         if (submitButton)
@@ -139,7 +151,15 @@ async function check2FACode(username, code) {
         };
 
         loginForm.addEventListener("submit", handleSubmit);
+        if (loginStatus && msgReg && msgReg !== null)
+            loginStatus.textContent = msgReg;
+        else if (loginStatus && msg)
+            loginStatus.textContent = msg;
+        setTimeout(() => {
+            msgReg = null;
+            msg = null;
+        }, 5000);
     } else {
-        console.error("Login form not found.");
+        //console.error("Login form not found.");
     }
 }
