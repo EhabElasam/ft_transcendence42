@@ -14,7 +14,6 @@ import requests
 import uuid
 import os
 import json
-from .forms import UserRegistrationForm
 from .models import Tournament, User, Player, WaitingPlayer, Message, UserProfile, Feedback, Achievement, MyAppUserGroups, MyAppUserPermissions, Channel, GameStats
 from django.utils import timezone
 from django.db import IntegrityError
@@ -91,8 +90,10 @@ def remove_friend(request):
         token = request.headers.get('Authorization', '').split('Bearer ')[-1]
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
-        user_requester = User.objects.get(pk=user_id)
         
+        user_requester = User.objects.get(pk=user_id)
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         username = request.GET.get('username')
         
         if not username:
@@ -132,7 +133,8 @@ def add_friend(request):
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
         user_requester = User.objects.get(pk=user_id)
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         username = request.GET.get('username')
         
         if not username:
@@ -170,24 +172,29 @@ def get_friends(request):
         token = request.headers.get('Authorization', '').split('Bearer ')[-1]
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         user = User.objects.get(pk=user_id)
         
         requested_username = request.GET.get('username')
-        
         if requested_username:
+            if len(requested_username) > 50 or is_valid_username(requested_username):
+                return JsonResponse({'error': 'Invalid username format'}, status=400)
             requested_user = User.objects.get(username=requested_username)
             friends = requested_user.friends.all()
         else:
             friends = user.friends.all()
-        
-        active_sessions = Session.objects.filter(expire_date__gte=timezone.now() - timedelta(minutes=42))
+        time_threshold = timezone.now() - timedelta(seconds=settings.SESSION_COOKIE_AGE) + timedelta(minutes=42)
+
+        active_sessions = Session.objects.filter(expire_date__gte=time_threshold)
         online_user_ids = set()
         
         for session in active_sessions:
             user_id = session.get_decoded().get('_auth_user_id')
             if user_id:
                 online_user_ids.add(user_id)
+                #expire_date = session.expire_date
+                #print(f"User ID: {user_id}, Session Expiry Date: {expire_date}")
         friend_list = []
         
         for friend in friends:
@@ -209,13 +216,33 @@ def get_friends(request):
         return JsonResponse({'error': 'User not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+def get_blocked_users(request):
+    try:
+        token = request.headers.get('Authorization', '').split('Bearer ')[-1]
+        payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
+        user_id = payload['user_id']
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
+        user_requester = User.objects.get(pk=user_id)
+        
+        blocked_users = user_requester.blocked_users.all()
+        
+        blocked_usernames = [user.username for user in blocked_users]
+        
+        return JsonResponse({'blocked_users': blocked_usernames})
+    
+    except Exception as e:
+        return JsonResponse({'message': str(e)}, status=400)
+    
 def unblock_user(request):
     try:
         token = request.headers.get('Authorization', '').split('Bearer ')[-1]
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
         user_requester = User.objects.get(pk=user_id)
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         username = request.GET.get('username')
         
         if not username:
@@ -254,7 +281,8 @@ def block_user(request):
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
         user_requester = User.objects.get(pk=user_id)
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         username = request.GET.get('username')
         
         if not username:
@@ -287,13 +315,51 @@ def block_user(request):
     except Exception as e:
         return JsonResponse({'message': str(e)}, status=401)
 
+def fetch_game_history(request):
+    try:
+        token = request.headers.get('Authorization', '').split('Bearer ')[-1]
+        payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
+        user_id = payload['user_id']
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
+        username = request.GET.get('username')
+        
+        if username and is_valid_username(username):
+            user = User.objects.get(username=username)
+            user_id = user.id
+        else:
+            user = User.objects.get(id=user_id)
+
+        game_history = Achievement.objects.filter(user_id=user_id)
+
+        game_history_data = []
+        for achievement in game_history:
+            game_history_data.append({
+                'opponent': achievement.opponent,
+                'game_type': achievement.game_type,
+                'tournaments_won': achievement.tournaments_won,
+                'date_time_played': achievement.date_time_played.strftime('%Y-%m-%d %H:%M:%S')  # Convert to string
+            })
+
+        return JsonResponse(game_history_data, safe=False)  # Set safe=False to allow serialization of lists
+    except jwt.ExpiredSignatureError:
+        return JsonResponse({'error': 'JWT token expired'}, status=401)
+    except jwt.InvalidTokenError:
+        return JsonResponse({'error': 'Invalid JWT token'}, status=401)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    except KeyError:
+        return JsonResponse({'error': 'User ID not found in token'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 def fetch_achievements(request):
     try:
         token = request.headers.get('Authorization', '').split('Bearer ')[-1]
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         achievements = Achievement.objects.filter(user_id=user_id).first()
 
         if not achievements:
@@ -303,8 +369,7 @@ def fetch_achievements(request):
             'games_played': achievements.games_played,
             'games_won': achievements.games_won,
             'games_lost': achievements.games_lost,
-            'tournaments_won': achievements.tournaments_won,
-            'favorite_game': achievements.favorite_game,
+            'winning_rate': round((achievements.games_won / achievements.games_played) * 100, 2) if achievements.games_played > 0 else 0,
         }
 
         return JsonResponse(data)
@@ -316,7 +381,7 @@ def fetch_achievements(request):
         return JsonResponse({'error': 'User ID not found in token'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
-    
+
 def logout_view(request):
     token = request.headers.get('Authorization', '').split('Bearer ')[-1]
 
@@ -334,6 +399,7 @@ def logout_view(request):
                 pass
 
         request.session.flush()
+        
 
         return JsonResponse({'success': 'Logged out successfully'})
     
@@ -370,8 +436,8 @@ def submit_feedback(request):
 @csrf_exempt
 def get_online_users(request):
     try:
-        time_threshold = timezone.now() - timedelta(minutes=42)
-        
+        time_threshold = timezone.now() - timedelta(seconds=settings.SESSION_COOKIE_AGE) + timedelta(minutes=42)
+
         active_sessions = Session.objects.filter(expire_date__gte=time_threshold)
         
         online_user_ids = set()  
@@ -446,14 +512,14 @@ def messages(request):
 
 
 def chat(request):
-    return render(request, 'chatpage.html')
+    return JsonResponse({'error': str(e)}, status=404)
 
 from django.contrib.sessions.models import Session
 
 def get_profile_info(request):
     username = request.GET.get('username')
     
-    if not username:
+    if not username or not is_valid_username(username):
         return JsonResponse({'error': 'Username parameter is missing'}, status=400)
     token = request.headers.get('Authorization', '').split('Bearer ')[-1]
     
@@ -463,7 +529,8 @@ def get_profile_info(request):
         user_requester = User.objects.get(pk=user_id)
         user = User.objects.get(username=username)
         csrf_token = get_token(request)
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         is_online = False
         active_sessions = Session.objects.filter(expire_date__gte=timezone.now())
         for session in active_sessions:
@@ -476,9 +543,9 @@ def get_profile_info(request):
         achievements = Achievement.objects.filter(user_id=user.id).first()
 
         # Calculate winning rate
-        games_played = achievements.games_played if achievements else 0
-        games_won = achievements.games_won if achievements else 0
-        games_lost = achievements.games_lost if achievements else 0
+        games_played = user.games_played
+        games_won = user.games_won
+        games_lost = user.games_lost
         winning_rate = round((games_won / games_played) * 100, 2) if games_played > 0 else 0
         
         user_info = {
@@ -578,7 +645,8 @@ def proxy_viewb(request):
     code = request.GET.get('code')
     if not code:
         return JsonResponse({'error': 'Code parameter is missing'}, status=400)
-
+    if len(code) != 64 or not re.match(r'^[a-zA-Z0-9]+$', code):
+        return JsonResponse({'error': 'Invalid code format'}, status=400) 
     client_id = os.getenv('CLIENT_ID')
     client_secret = os.getenv('CLIENT_SECRET')
     redirect_uri = os.getenv('REDIRECT_URI')
@@ -643,7 +711,8 @@ def proxy_viewc(request):
     code = request.GET.get('code')
     if not code:
         return JsonResponse({'error': 'Code parameter is missing'}, status=400)
-
+    if len(code) != 64 or not re.match(r'^[a-zA-Z0-9]+$', code):
+        return JsonResponse({'error': 'Invalid code format'}, status=400)
     client_id = os.getenv('CLIENT_ID')
     client_secret = os.getenv('CLIENT_SECRET')
     redirect_uri = os.getenv('REDIRECT_URI')
@@ -737,17 +806,21 @@ def get_nickname(request):
 
 @api_view(['POST'])
 def update_nickname(request):
-    if request.method == 'POST':
-        new_nickname = request.data.get('nickname')  
-        user = request.user
-        if user.is_authenticated:
-            user.nickname = new_nickname
-            user.save()
-            return JsonResponse({"message": "Nickname updated successfully."})
-        else:
-            return JsonResponse({'error': 'User is not authenticated'}, status=401)
-    else:
-        return JsonResponse({"message": "Invalid request method."}, status=400)
+    if request.method == 'POST' and 'nickname' in request.POST:
+        try:
+            new_nickname = request.POST.get('nickname')
+            user = User.objects.filter(nickname=new_nickname).first()
+            if user is not None:
+                return JsonResponse({'error': 'Nickname is already used'}, status=400)
+            
+            if new_nickname:
+                if not re.match(r'^[a-zA-Z0-9_-]+$', new_nickname):
+                    return JsonResponse({'error': 'Invalid nickname format. Only alphanumeric characters, underscore, and hyphen are allowed.'}, status=400)
+                request.user.nickname = new_nickname
+                request.user.save()
+                return JsonResponse({'message': 'Profile information updated successfully'})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
 
 @api_view(['POST'])
@@ -759,6 +832,8 @@ def upload_avatar(request):
             payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
             user_id = payload['user_id']
             user = User.objects.get(pk=user_id)
+            if user_id and 'user_id' not in request.session:
+                request.session['user_id'] = user_id
         except jwt.ExpiredSignatureError:
             return Response({"message": "JWT token has expired."}, status=status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
@@ -791,36 +866,40 @@ def upload_avatar(request):
             return Response({"message": "No avatar file provided."}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         print(f"An error occurred: {str(e)}")
-        return Response({"message": "An error occurred while uploading the avatar."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        return Response({"message": "An error occurred while uploading the avatar."}, status=401)
 def update_score(request):
     token = request.headers.get('Authorization', '').split('Bearer ')[-1]
     try:
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
         user = User.objects.get(pk=user_id)
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         result = request.GET.get('result') 
-        user.score += 1
-        user.save()
-
-        # Try to retrieve the Achievement object for the user
-        try:
-            achievements = Achievement.objects.get(user=user)
-        except Achievement.DoesNotExist:
-            # If Achievement object does not exist, create a new one
-            achievements = Achievement.objects.create(user=user)
-
-        achievements.games_played += 1
+        opponent = request.GET.get('opponent')
+        if not opponent:
+            opponent = 'cpu'
+        gametype = request.GET.get('gametype')
 
         if result == 'win':
-            achievements.games_won += 1
+            user.games_won = user.games_won + 1 
         elif result == 'lost':
-            achievements.games_lost += 1
+            user.games_lost = user.games_lost + 1   
+        user.games_played = user.games_played + 1
+        user.save()
 
-        achievements.save()
+        Achievement.objects.create(
+            user=user,
+            games_played=user.games_played,
+            games_won=user.games_won,
+            games_lost=user.games_lost,
+            tournaments_won=1 if result == 'win' else 0,
+            date_time_played=timezone.now(),
+            game_type=gametype,
+            opponent=opponent
+        )
 
-        return JsonResponse({'message': 'Score and achievements updated successfully'})
+        return JsonResponse({'message': 'Score and game history updated successfully'})
     except jwt.ExpiredSignatureError:
         return JsonResponse({'error': 'JWT signature has expired'}, status=401)
     except jwt.InvalidTokenError:
@@ -870,18 +949,14 @@ def leaderboard(request):
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
         user = User.objects.get(pk=user_id)
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         leaderboard_users = User.objects.order_by('-score')[:100]  
 
         leaderboard_data = []
         for user in leaderboard_users:
-            try:
-                achievements = Achievement.objects.get(user=user)
-                total_games_played = achievements.games_played
-                total_games_won = achievements.games_won
-            except Achievement.DoesNotExist:
-                total_games_played = 0
-                total_games_won = 0
+            total_games_played = user.games_played
+            total_games_won = user.games_won
 
             winning_rate = 0
             if total_games_played > 0:
@@ -894,7 +969,7 @@ def leaderboard(request):
                 'image_link': user.image_link,
                 'score': user.score,
                 'is_online': user.is_authenticated,
-                'winning_rate': round(winning_rate/100, 2)  # Round to 2 decimal places
+                'winning_rate': round(winning_rate/100, 2)
             }
             leaderboard_data.append(user_data)
         
@@ -946,12 +1021,11 @@ def register(request):
             password = request.POST.get('password')
             confirm_password = request.POST.get('confirm_password')
 
-            # Input validation
             if not all([username, email, password, confirm_password]):
                 return JsonResponse({"error": "All fields are required."}, status=400)
 
-            if not re.match(r'^[\w-]+$', username):
-                return JsonResponse({"error": "Username can only contain alphanumeric characters, underscores, and hyphens."}, status=400)
+            if len(username) > 50 or not is_valid_username(username):
+                return JsonResponse({"error": "Username can only contain alphanumeric characters, underscores, and hyphens. Max. 50chars."}, status=400)
 
             if not re.match(r'^[\w\.-]+@[\w\.-]+$', email):
                 return JsonResponse({"error": "Invalid email format. Please enter a valid email address."}, status=400)
@@ -968,7 +1042,6 @@ def register(request):
             if not all(char.isalnum() or char in ['_', '-'] for char in username):
                 return JsonResponse({"error": "Username can only contain alphanumeric characters, underscores, and hyphens."}, status=400)
 
-            # Check for existing username and email
             if User.objects.filter(username=username).exists():
                 return JsonResponse({"error": "Username already exists. Please choose a different username."}, status=400)
 
@@ -978,7 +1051,6 @@ def register(request):
             if password != confirm_password:
                 return JsonResponse({"error": "Passwords do not match. Please make sure your passwords match."}, status=400)
 
-            # Create user
             user = User.objects.create_user(username=username, email=email, password=password, score=0)
             user.nickname = username
             user.is_oauth_user = False
@@ -986,7 +1058,7 @@ def register(request):
             
             return JsonResponse({"message": "Registration successful. You can now log in."}, status=200)
 
-        except IntegrityError:
+        except Exception as e:
             return JsonResponse({"error": "An error occurred while registering. Please try again later."}, status=400)
 
     else:
@@ -997,6 +1069,11 @@ def login_view(request):
         if request.method == 'POST':
             username = request.POST.get('username')
             password = request.POST.get('password')
+            if not all([username, password]):
+	            return JsonResponse({"error": "All fields are required."}, status=400)
+            if len(username) > 50 or not is_valid_username(username):
+                return JsonResponse({'error': 'Invalid username format'}, status=400)
+            
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
@@ -1022,7 +1099,7 @@ def login_view(request):
             else:
                 return JsonResponse({'error': 'Invalid login credentials'}, status=400)
         else:
-            return render(request, 'login.html')
+            return JsonResponse({'error': str(e)}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -1097,7 +1174,8 @@ def manage_profile(request):
         user_id = payload['user_id']
         user = User.objects.get(pk=user_id)
         csrf_token = get_token(request)
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         if request.method == 'GET':
             user_info = {
                 'userNickname': getattr(user, 'nickname', 'unknown'),
@@ -1106,6 +1184,10 @@ def manage_profile(request):
                 'email': getattr(user, 'email', 'unknown'),
                 'userLogin': getattr(user, 'username', 'unknown'),
                 'csrfToken': csrf_token,
+                'games_played': user.games_played,
+                'games_won': user.games_won,
+                'games_lost': user.games_lost,
+                'winning_rate': round((user.games_won / user.games_played) * 100, 2) if user.games_played > 0 else 0,
             }
             return JsonResponse({'user_info': user_info})
         
@@ -1126,17 +1208,33 @@ def manage_profile(request):
         elif request.method == 'POST' and 'nickname' in request.POST:
             try:
                 new_nickname = request.POST.get('nickname')
-                
-                if new_nickname:
-                    if not re.match(r'^[a-zA-Z0-9_-]+$', new_nickname):
-                        return JsonResponse({'error': 'Invalid nickname format. Only alphanumeric characters, underscore, and hyphen are allowed.'}, status=400)
-                    user.nickname = new_nickname
-                
+                if new_nickname is None:
+                    return JsonResponse({'error': 'Nickname parameter is missing'}, status=400)
+                if not re.match(r'^[a-zA-Z0-9_-]+$', new_nickname):
+                    return JsonResponse({'error': 'Invalid nickname format. Only alphanumeric characters, underscore, and hyphen are allowed.'}, status=400)
+
+                user2 = User.objects.filter(nickname=new_nickname).first()
+                if user2 is not None:
+                    return JsonResponse({'error': 'Nickname already exists'}, status=400)
+
+                user.nickname = new_nickname
                 user.save()
                 return JsonResponse({'message': 'Profile information updated successfully'})
+
             except Exception as e:
                 return JsonResponse({'error': str(e)}, status=400)
-        
+
+        elif request.method == 'POST':
+            try:
+                if 'image_link' in request.POST:
+                    new_imagelink = request.POST.get('image_link')
+                    user.image_link = new_imagelink
+
+                    user.save()
+                    return JsonResponse({'message': 'Profile information updated successfully'})                
+               
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=400)
         elif request.method == 'DELETE':
             Achievement.objects.filter(user=user).delete()
             MyAppUserGroups.objects.filter(user=user).delete()
@@ -1173,7 +1271,10 @@ def check_2fa_code(request):
 
     if not username or not code:
         return JsonResponse({'error': 'Username or code parameter is missing'}, status=400)
-
+    if len(code) != 64 or not re.match(r'^[a-zA-Z0-9]+$', code):
+        return JsonResponse({'error': 'Invalid code format'}, status=400)
+    if len(username) > 50 or not is_valid_username(username):
+        return JsonResponse({'error': 'Invalid username format'}, status=400)
     try:
         user = User.objects.get(username=username)
         saved_activation_code = user.activation_code
@@ -1195,7 +1296,8 @@ def get_2fa_status(request):
 
     if not username:
         return JsonResponse({'error': 'Username parameter is missing'}, status=400)
-
+    if len(username) > 50 or not is_valid_username(username):
+        return JsonResponse({'error': 'Invalid username format'}, status=400)
     try:
         user = User.objects.get(username=username)
         is_2fa_enabled = user.two_factor_enabled if hasattr(user, 'two_factor_enabled') else False
@@ -1210,7 +1312,8 @@ def generate_qr_code(request):
         payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
         user_id = payload['user_id']
         user = User.objects.get(pk=user_id)
-        
+        if user_id and 'user_id' not in request.session:
+            request.session['user_id'] = user_id
         if user.two_factor_enabled:
             return JsonResponse({'error': '2FA is already enabled'}, status=400)
         
@@ -1263,7 +1366,8 @@ def activate_2fa(request):
             payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
             user_id = payload['user_id']
             user = User.objects.get(pk=user_id)
-            
+            if user_id and 'user_id' not in request.session:
+                request.session['user_id'] = user_id
             
             saved_activation_code = user.activation_code
             
@@ -1297,6 +1401,8 @@ def deactivate_2fa(request):
             payload = jwt.decode(token, settings.SIGNING_KEY, algorithms=['HS256'])
             user_id = payload['user_id']
             user = User.objects.get(pk=user_id)
+            if user_id and 'user_id' not in request.session:
+                request.session['user_id'] = user_id
             if not user.two_factor_enabled:
                 return JsonResponse({'error': '2FA is not enabled for this user'}, status=400)
             user.two_factor_enabled = False  

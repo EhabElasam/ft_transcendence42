@@ -53,7 +53,7 @@ function showPongEhab() {
                 isGamePaused = false;
             }
         });
-  
+
         function keyDownHandler(event) {
             switch (event.keyCode) {
                 case 87:
@@ -115,85 +115,73 @@ function showPongEhab() {
             ball.velocityY = ball.speed * Math.sin(angleRad);
             ball.speed += 0.1;
         }
-  
+
         function newGamButton() {
-          const button = document.getElementById('newGamButton');
-          if (button)
-          {
-            button.style.display = 'block'; 
-          button.addEventListener('click', function() {
-              location.reload(); 
-          });
+            const button = document.getElementById('newGamButton');
+            if (button)
+            {
+                button.style.display = 'block'; 
+                button.addEventListener('click', function() {
+                location.reload(); 
+                });
+            }
         }
-      }
-  
-      showStartMessageWithCountdown(5);
-  
-      function showStartMessageWithCountdown(seconds) {
-        if (seconds > 0) {
+        
+        showStartMessageWithCountdown(5);
+
+        async function showStartMessageWithCountdown(seconds) {
+            if (seconds > 0) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+                ctx.fillStyle = "#FFF";
+                ctx.font = "20px Arial";
+                ctx.textAlign = "left";
+
+                let player = await translateKey("player");
+                let useWS = await translateKey("useWS");
+                ctx.fillText(player+" 1", 20, canvas.height / 2 - 10);
+                ctx.fillText(useWS+" (W / S)", 20, canvas.height / 2 + 10);
+        
+                ctx.fillText(player+" 2", canvas.width - 100, canvas.height / 2 - 10);
+                ctx.fillText(useWS+" (↑ / ↓)", canvas.width - 150, canvas.height / 2 + 10);
+        
+                ctx.font = "bold 30px Arial";
+                let whoevergets = await translateKey("whoevergets");
+                ctx.fillText(whoevergets, canvas.width / 2 - 200, canvas.height / 2 - 20);
+        
+                ctx.font = "bold 30px Arial";
+                let starting = await translateKey("starting");
+                ctx.fillText(starting + seconds, canvas.width / 2 - 100, canvas.height / 2 + 50);
+        
+                setTimeout(function () {
+                    showStartMessageWithCountdown(seconds - 1);
+                }, 1000);
+            } else {
+                gameLoop();
+            }
+        }
+
+        async function showGameOverModal(winner) {
             ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-            ctx.fillStyle = "#FFF";
-            ctx.font = "20px Arial";
-            ctx.textAlign = "left";
-    
-            ctx.fillText("Player 1", 20, canvas.height / 2 - 10);
-            ctx.fillText("Use (W / S)", 20, canvas.height / 2 + 10);
-    
-            ctx.fillText("Player 2", canvas.width - 100, canvas.height / 2 - 10);
-            ctx.fillText("Use (↑ / ↓)", canvas.width - 100, canvas.height / 2 + 10);
-    
-            ctx.font = "bold 30px Arial";
-            ctx.fillText("Whoever scores 7 goals first wins", canvas.width / 2 - 225, canvas.height / 2 - 20);
-    
-            ctx.font = "bold 30px Arial";
-            ctx.fillText("Starting in: " + seconds, canvas.width / 2 - 100, canvas.height / 2 + 50);
-    
-            setTimeout(function () {
-                showStartMessageWithCountdown(seconds - 1);
+            ctx.fillStyle = "white";
+            ctx.font = "48px Arial";
+            ctx.textAlign = "center";
+            let won = await translateKey("won");
+            ctx.fillText(`${winner} `+won, canvas.width / 2, canvas.height / 2);
+
+            setTimeout(() => {
+                const newGamButton2 = document.getElementById('newGamButton');
+                if (newGamButton2)
+                    document.getElementById('newGamButton').style.display = 'block';
+                newGamButton();
             }, 1000);
-        } else {
-            gameLoop();
+            gameOver = true;
         }
-    }
-  
-      function showGameOverModal2(winner) {
-          ctx.fillStyle = "white";
-          ctx.font = "48px Arial";
-          ctx.fillText(`${winner} Won!`, canvas.width / 4, canvas.height / 2 );
-          
-          
-          const newGamButton2 = document.getElementById('newGamButton');
-          if (newGamButton2)
-              document.getElementById('newGamButton').style.display = 'block';
-          newGamButton();
-      }
-  
-      function showGameOver() {
-          ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-          ctx.fillStyle = "white";
-          ctx.font = "48px Arial";
-          ctx.textAlign = "center";
-          ctx.fillText(gameOverMessage, canvas.width / 2, canvas.height / 2 - 100); 
-      
-      }
-      
-      function showGameOverModal(winner) {
-          gameOverMessage = `${winner} Won!`;
-          showGameOverModal2(winner);
-          gameOver = true;
-      }
-  
-      function disableControls() {
-          document.removeEventListener('keydown', keyDownHandler);
-          document.removeEventListener('keyup', keyUpHandler);
-      }
-  
+
         function update() {
-            if (gameOver) return;
+            if (gameOver|| isGamePaused) return;
   
             if (wPressed && player1.y > 0) player1.y -= 8;
             else if (sPressed && player1.y < canvas.height - player1.height) player1.y += 8;
@@ -209,68 +197,65 @@ function showPongEhab() {
             } else if (ball.y + ball.radius > canvas.height) {
               ball.velocityY = -Math.abs(ball.velocityY);
             }
-  
+   
             if (ball.x - ball.radius < 0) {
                 player2.score++;
-                if (player2.score >= 7) {
-                    gameOver = true;
-                    showGameOverModal('Player 2');
-                    disableControls();
-                } else {
-                    resetBall();
-                }
+                resetBall();
             } else if (ball.x + ball.radius > canvas.width) {
                 player1.score++;
-                if (player1.score >= 7) {
-                    gameOver = true;
-                    showGameOverModal('Player 1');
-                    disableControls();
-                } else {
-                    resetBall();
-                }
+                resetBall();
             }
   
             if (collisionDetect(player1, ball)) handlePaddleBallCollision(player1, ball);
             if (collisionDetect(player2, ball)) handlePaddleBallCollision(player2, ball);
         }
-  
-        function resetBall() {
-          ball.x = canvas.width / 2;
-          ball.y = Math.random() * (canvas.height - ball.radius * 2) + ball.radius;
-          ball.velocityX = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
-          ball.velocityY = (Math.random() * 2 - 1) * ball.speed;
-          ball.speed = 7;
+
+        async function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.velocityX = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
+            ball.velocityY = (Math.random() * 2 - 1) * ball.speed;
+            ball.speed = 7;
+        
+            let player = await translateKey("player");
+
+            if (player1.score >= 7 || player2.score >= 7) {
+                setTimeout(() => {
+                    if (player1.score >= 7) {
+                        showGameOverModal(player+" 1");
+                    } else if (player2.score >= 7) {
+                        showGameOverModal(player+" 2");
+                    }
+                }, 100);
+            }
         }
-  
-        function drawScore() {
-            ctx.fillStyle = "white";
-            ctx.font = "32px Arial";
-            ctx.fillText(player1.score.toString(), 20, 50);
-            ctx.fillText(player2.score.toString(), canvas.width - 140, 50);
-        }
-  
+
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawPaddle(player1.x, player1.y, player1.width, player1.height, player1.color);
             drawPaddle(player2.x, player2.y, player2.width, player2.height, player2.color);
             drawBall(ball.x, ball.y, ball.radius, ball.color);
             drawScore();
-            if (gameOver) {
-              showGameOver(); 
-          }
         }
   
         function drawPaddle(x, y, width, height, color) {
             ctx.fillStyle = color;
             ctx.fillRect(x, y, width, height);
         }
-  
+        
         function drawBall(x, y, radius, color) {
             ctx.fillStyle = color;
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2, true);
             ctx.closePath();
             ctx.fill();
+        }
+        
+        function drawScore() {
+            ctx.font = "32px Arial";
+            ctx.fillStyle = "white";
+            ctx.fillText(player1.score.toString(), 50, 50);
+            ctx.fillText(player2.score.toString(), canvas.width - 100, 50);
         }
   
         function gameLoop() {

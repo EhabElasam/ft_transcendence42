@@ -14,7 +14,6 @@
     "blockSuccess": "用戶封鎖成功",
     "cancel": "取消",
     "changeNickname": "更改暱稱",
-    "changePhoto": "更改照片",
     "channel": "#頻道",
     "chattitle": "聊天",
     "chatUsers": "在線用戶",
@@ -148,6 +147,23 @@
     "totalgames": "总游戏数",
     "totalwins": "总胜利数",
     "totalloses": "总失败数",
-    "WinningRatelbl": "胜率"
+    "WinningRatelbl": "胜率",
+    "wontext": "你赢了\n再玩一次",
+    "losetext": "CPU赢了\n再玩一次",
+    "useWS":"使用",
+    "whoevergets":"谁丢掉7个球谁就输了",
+    "starting":"从开始 ",
+    "changePhoto": "上传照片",
+    "plagain": "再玩一次！",
+    "lost": "输了！",
+    "won": "赢了！",
+    "howmany": "比赛中会有多少玩家参与？",
+    "enter": "玩家姓名",
+    "winner": "比赛的赢家是玩家",
+    "congrats": "祝贺！",
+    "tourna": "比赛现在开始。",
+    "scoregoals": "先进7球者获胜",
+  "leftside": "你在左侧。",
+  "moving": "使用 'W' 和 'S' 进行移动."
   }
   

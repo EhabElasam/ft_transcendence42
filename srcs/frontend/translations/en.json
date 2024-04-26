@@ -14,7 +14,6 @@
   "blockSuccess": "User blocked successfully",
   "cancel": "Cancel",
   "changeNickname": "Change Nickname",
-  "changePhoto": "Change Photo",
   "channel": "#CHANNEL",
   "chattitle": "Chat",
   "chatUsers": "Online Users",
@@ -149,11 +148,24 @@
   "totalgames": "Total Games played",
   "totalwins": "Total Wins",
   "totalloses": "Total Loses",
-  "WinningRatelbl": "Winning Rate",
-  
+  "WinningRatelbl": "Winning Rate",  
   "wontext": "YOU WON\nPLAY AGAIN",
   "losetext": "CPU WON\nPLAY AGAIN",
   "useWS":"use",
-  "whoevergets":"Whoever gets 7 goals loses",
-  "starting": "Starting in"
+  "whoevergets":"Whoever concedes 7 goals loses",
+  "starting": "Starting in ",
+  "changePhoto": "Upload Photo",
+  "plagain": "Play again!",
+  "lost": "lost!",
+  "won": "won!",
+  "howmany": "How many players will there be in the tournament?",
+  "enter": "Enter name for Player",
+  "winner": "The winner of the tournament is",
+  "congrats": "Congratulations!",
+  "tourna": "Tournament starts now.",
+  "scoregoals": "Whoever scores 7 goals first wins",
+  "leftside": "You are on the left side.",
+  "moving": "use 'W' and 'S' to move.",
+
+  "wanttoplay": "Do you want to play a game?"
 }
