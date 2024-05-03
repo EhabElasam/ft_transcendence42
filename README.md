@@ -8,4 +8,4 @@
 
 ![Screenshot](screenshot.png)
 
-[Website](https://pong42.vercel.app)
+[Website](https://ehab42.vercel.app/#login)
