@@ -8,4 +8,4 @@
 
 ![Screenshot](screenshot.png)
 
-[Website](https://eelasam.vercel.app)
+[Website](https://pong42.vercel.app)
