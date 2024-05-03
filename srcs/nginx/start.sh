@@ -15,3 +15,4 @@ done
 echo -e "Ready! Open: https://localhost:8443/"
 
 nginx -g "daemon off;"
+#nginx

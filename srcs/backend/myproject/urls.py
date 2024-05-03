@@ -16,9 +16,7 @@ urlpatterns = [
     path('ws/chatpage/', consumers.ChatConsumer.as_asgi()),
     path('ws/pingpong/', consumers.PingPongConsumer.as_asgi()),
 
-
     path('api/login/', views.login_view, name='api_login'),
-    path('api/ping/', views.login_view, name='api_ping'),
     path('api/register/', views.register, name='api_register'),
     path('api/leaderboard/', views.leaderboard, name='api_leaderboard'),
     path('api/tournaments/', views.tournaments, name='api_tournaments'),
@@ -27,10 +25,7 @@ urlpatterns = [
     path('api/send-message/', views.send_message, name='send_message'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/proxyb/', views.proxy_viewb, name='proxy_viewb'),
     path('api/proxyc/', views.proxy_viewc, name='proxy_viewc'),
-    path('api/signin42/', views.signin42, name='signin42'),
-    path('api/signin42b/', views.signin42b, name='signin42b'),
     path('api/signin42c/', views.signin42c, name='signin42c'),
     path('api/messages', views.messages, name='messages'),
     path('api/get_all_users', views.get_all_users, name='get_all_users'),
@@ -60,8 +55,9 @@ urlpatterns = [
     path('api/block-user', views.block_user, name='block_user'),
     path('api/unblock-user', views.unblock_user, name='unblock_user'),
     path('api/remove-friend', views.remove_friend, name='remove_friend'),
-
     path('api/friends', views.get_friends, name='get_friends'),
+    path('api/save_tournament_data', views.save_tournament_data, name='save_tournament_data'),
+    path('api/get_tournament_data', views.get_tournament_data, name='get_tournament_data'),
     path('api/fetch_achievements', views.fetch_achievements, name='fetch_achievements'),
     path('api/fetch_game_history', views.fetch_game_history, name='fetch_game_history'),
     path('api/get-blocked-users/', views.get_blocked_users, name='get_blocked_users'),

@@ -7,6 +7,7 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+AUTH_USER_MODEL = 'myapp.MyAppUser'
 SESSION_COOKIE_AGE = 36000
 
 SECRET_KEY = os.getenv('SECRET_KEY')
@@ -14,16 +15,15 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
-REDIRECT_URI = os.environ.get("REDIRECT_URI")
 DJANGO_ALLOW_ASYNC_UNSAFE = True
 SIGNING_KEY = os.environ.get("JWT_SECRET_KEY")
 
 if os.environ.get('DEBUG') in ['1', 'true']:
-    #SECURE_SSL_REDIRECT = True
-    #SESSION_COOKIE_SECURE = True
-    #CSRF_COOKIE_SECURE = True
     DEBUG = True
 
+PBKDF2_ITERATIONS = 180000  # Number of iterations (default is 180,000)
+PBKDF2_SALT_LENGTH = 12     # Length of generated salt (default is 12)
+PBKDF2_DIGEST = 'sha256'
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',  # Default PBKDF2 algorithm
     'django.contrib.auth.hashers.Argon2PasswordHasher',  # Argon2 algorithm (recommended for newer projects)
@@ -40,6 +40,12 @@ ALLOWED_HOSTS = [
     'pong42.vercel.app',
     'four2trans-backend.onrender.com', 
     'localhost:3000',
+    'c3r1p1.42vienna.com',
+    'c3r1p5.42vienna.com',
+    'c3r1p2.42vienna.com',
+    'c3r1p3.42vienna.com',
+    '10.13.1.5',
+    '10.13.1.1',
     'localhost:5500',
     'localhost:8443',
     'localhost:443',
@@ -52,8 +58,6 @@ ALLOWED_HOSTS = [
 ]
 
 
-SOCKETIO_HOST = "0.0.0.0"
-SOCKETIO_PORT = 8001
 
 INSTALLED_APPS = [
     'daphne',
@@ -69,7 +73,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'myapp',
     'channels',
-    'socketio',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +85,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    #'whitenoise.middleware.WhiteNoiseMiddleware',
 
 ]
 
@@ -190,6 +193,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8443',
     'https://localhost:8443',
     'https://localhost:443',
+    'https://10.13.1.1:8443',
+    'https://10.13.1.2:8443',
+    'https://10.13.1.3:8443',
+    'https://10.13.1.4:8443',
+    'https://10.13.1.5:8443',
+    'https://10.13.1.5',
     'http://127.0.0.1',
     'https://127.0.0.1:8000',
     'https://127.0.0.1',
@@ -202,6 +211,14 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:5500',
     'https://transcendence-beige.vercel.app',
     'https://api.intra.42.fr',
+    'https://c3r1p1.42vienna.com',
+    'https://c3r1p3.42vienna.com',
+    'https://c3r1p4.42vienna.com',
+    'https://c3r1p5.42vienna.com',
+    'https://c3r1p1.42vienna.com:8443',
+    'https://c3r1p3.42vienna.com:8443',
+    'https://c3r1p4.42vienna.com:8443',
+    'https://c3r1p5.42vienna.com:8443',
     'https://192.168.32.1',
     'https://169.254.131.21',
     'https://20.79.107.6',
@@ -220,6 +237,21 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1',
     'https://127.0.0.1:8000',
     'https://127.0.0.1',
+    'https://10.13.1.1:8443',
+    'https://10.13.1.1',
+    'https://10.13.1.2:8443',
+    'https://10.13.1.3:8443',
+    'https://10.13.1.4:8443',
+    'https://10.13.1.5:8443',
+    'https://10.13.1.5',
+    'https://c3r1p1.42vienna.com',
+    'https://c3r1p3.42vienna.com',
+    'https://c3r1p4.42vienna.com',
+    'https://c3r1p5.42vienna.com',
+    'https://c3r1p1.42vienna.com:8443',
+    'https://c3r1p3.42vienna.com:8443',
+    'https://c3r1p4.42vienna.com:8443',
+    'https://c3r1p5.42vienna.com:8443',
     'http://127.0.0.1:5500',
     'https://pong42.vercel.app',
     'http://pong42.vercel.app',

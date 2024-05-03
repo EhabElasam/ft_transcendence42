@@ -11,7 +11,6 @@ function showPlayer3d1Page() {
     let ball, paddle1, paddle2;
     let ballDirX = 1, ballDirY = 1, ballSpeed = 3;
     let maxScore = 7;
-    let difficulty = 0.7;
     const Key = {
         _pressed: {},
         LEFT_ARROW: 37,
@@ -69,17 +68,6 @@ function showPlayer3d1Page() {
     function showInstructions() {
         instructionsModal.style.display = "block !important" ;
         document.getElementById("instructions3d").style.display = "bloc! important";
-        const closeBtn = instructionsModal.querySelector(".close");
-        closeBtn.addEventListener("click", function () {
-            instructionsModal.style.display = "block";
-            setup();
-        });
-        window.onclick = function(event) {
-            if (event.target == instructionsModal) {
-                instructionsModal.style.display = "block !important";
-                setup();
-            }
-        };
     }
     function draw() {
         renderer.render(scene, camera);
@@ -100,129 +88,73 @@ function showPlayer3d1Page() {
         draw();
     }
     function createScene() {
-        const WIDTH = 950,
-            HEIGHT = 480;
-        const VIEW_ANGLE = 50,
-            ASPECT = WIDTH / HEIGHT,
-            NEAR = 0.1,
-            FAR = 10000;
+        const WIDTH = 950, HEIGHT = 480;
         const c = document.getElementById("gameCanvas3d");
         renderer = new THREE.WebGLRenderer();
-        camera =
-            new THREE.PerspectiveCamera(
-                VIEW_ANGLE,
-                ASPECT,
-                NEAR,
-                FAR);
+        camera = new THREE.PerspectiveCamera(45, WIDTH / HEIGHT, 1, 1000);
         scene = new THREE.Scene();
         scene.add(camera);
-        camera.position.z = 320;
         renderer.setSize(WIDTH, HEIGHT);
         c.appendChild(renderer.domElement);
-        const planeWidth = fieldWidth,
-            planeHeight = fieldHeight,
-            planeQuality = 10;
-        const paddle1Material =
-            new THREE.MeshLambertMaterial({
-                color: 0x0A0A0A
-            });
-        const paddle2Material =
-            new THREE.MeshLambertMaterial({
-                color: 0x550055
-            });
-        const planeMaterial =
-            new THREE.MeshLambertMaterial({
-                color: 0x6495ED
-            });
-        const tableMaterial =
-            new THREE.MeshLambertMaterial({
-                color: 0x8B4513
-            });
-        const groundMaterial =
-            new THREE.MeshLambertMaterial({
-                color: 0x333333
-            });
-        const plane = new THREE.Mesh(
-            new THREE.PlaneGeometry(
-                planeWidth * 0.95,
-                planeHeight,
-                planeQuality,
-                planeQuality),
-            planeMaterial);
-        scene.background = new THREE.Color(0x333333);
-        scene.add(plane);
-        plane.receiveShadow = true;
-        const table = new THREE.Mesh(
-            new THREE.BoxGeometry(
-                planeWidth * 1.05,
-                planeHeight * 1.03,
-                100,
-                planeQuality,
-                planeQuality,
-                1),
-            tableMaterial);
-        table.position.z = -51;
-        scene.add(table);
-        table.receiveShadow = true;
-        const radius = 5,
-            segments = 6,
-            rings = 6;
-        const sphereMaterial =
-            new THREE.MeshLambertMaterial({
-                color: 0xD43001
-            });
-        ball = new THREE.Mesh(
-            new THREE.SphereGeometry(
-                radius,
-                segments,
-                rings),
-            sphereMaterial);
-        scene.add(ball);
-        ball.position.x = 0;
-        ball.position.y = 0;
-        ball.position.z = radius;
-        ball.receiveShadow = true;
-        ball.castShadow = true;
-        paddleDepth = 10;
-        paddleQuality = 1;
-        paddle1 = new THREE.Mesh(
-            new THREE.BoxGeometry(
-                paddleWidth,
-                paddleHeight,
-                paddleDepth,
-                paddleQuality,
-                paddleQuality,
-                paddleQuality),
-            paddle1Material);
-        scene.add(paddle1);
-        paddle1.receiveShadow = true;
-        paddle1.castShadow = true;
-        paddle2 = new THREE.Mesh(
-            new THREE.BoxGeometry(
-                paddleWidth,
-                paddleHeight,
-                paddleDepth,
-                paddleQuality,
-                paddleQuality,
-                paddleQuality),
-            paddle2Material);
-        scene.add(paddle2);
-        paddle2.receiveShadow = true;
-        paddle2.castShadow = true;
-        paddle1.position.x = -fieldWidth / 2 + paddleWidth;
-        paddle2.position.x = fieldWidth / 2 - paddleWidth;
-        paddle1.position.z = paddleDepth;
-        paddle2.position.z = paddleDepth;
-        const ground = new THREE.Mesh(
-            new THREE.BoxGeometry(
-                1000,
-                1000,
-                3,
-                1,
-                1,
-                1),
-            groundMaterial);
-        ground.position.z = -132;
+        const paddle1Material = new THREE.MeshLambertMaterial({ color: 0x00ff07 });
+        const paddle2Material = new THREE.MeshLambertMaterial({ color: 0x550055 });
+        const tableMaterial = new THREE.MeshLambertMaterial({ color: 0x1A2A1A });
+        const lineWidth = 1;
+        const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+
+        const centerLine = new THREE.Mesh(new THREE.BoxGeometry(fieldWidth, lineWidth, lineWidth),lineMaterial);
+        centerLine.position.z = lineWidth / 2 + 10;
+        scene.add(centerLine);
+
+        const sideLineLeft = new THREE.Mesh(new THREE.BoxGeometry(lineWidth, fieldHeight, lineWidth),lineMaterial);
+        sideLineLeft.position.x = -fieldWidth / 2 + lineWidth / 2;
+        sideLineLeft.position.z += 10;
+        scene.add(sideLineLeft);
+
+        const sideLineRight = new THREE.Mesh(new THREE.BoxGeometry(lineWidth, fieldHeight, lineWidth), lineMaterial);
+        sideLineRight.position.x = fieldWidth / 2 - lineWidth / 2 - 10;
+        sideLineRight.position.z += 11;
+        scene.add(sideLineRight);
+
+        const middleLine = new THREE.Mesh(new THREE.BoxGeometry(lineWidth, fieldHeight, lineWidth), lineMaterial);
+        middleLine.position.z = 10; 
+        scene.add(middleLine);
+
+const textureLoader = new THREE.TextureLoader();
+const groundMaterial = new THREE.MeshBasicMaterial({ map: textureLoader.load('../src/ground.jpg') });
+const bgLoader = new THREE.TextureLoader(); 
+scene.background = bgLoader.load('../src/tt.jpg');
+const table = new THREE.Mesh(new THREE.BoxGeometry(fieldWidth, fieldHeight, 10,10,1),tableMaterial);
+table.position.z = 5;
+scene.add(table);
+table.receiveShadow = true;
+
+const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0xD43001 });
+ball = new THREE.Mesh(new THREE.SphereGeometry(5, 6, 6),sphereMaterial);
+scene.add(ball);
+ball.position.x = 0;
+ball.position.y = 0;
+ball.position.z = 15;
+ball.receiveShadow = true;
+ball.castShadow = true;
+
+paddleDepth = 10;
+paddleQuality = 10;
+paddle1 = new THREE.Mesh(new THREE.BoxGeometry(paddleWidth,paddleHeight,paddleDepth,paddleQuality,paddleQuality,paddleQuality),paddle1Material);
+scene.add(paddle1);
+paddle1.receiveShadow = true;
+paddle1.castShadow = true;
+paddle2 = new THREE.Mesh(new THREE.BoxGeometry(paddleWidth,paddleHeight,paddleDepth,paddleQuality,paddleQuality,paddleQuality),paddle2Material);
+scene.add(paddle2);
+paddle2.receiveShadow = true;
+paddle2.castShadow = true;
+paddle1.position.x = -fieldWidth / 2 + paddleWidth;
+paddle2.position.x = fieldWidth / 2 - paddleWidth;
+paddle1.position.z = paddleDepth + 5;
+paddle2.position.z = paddleDepth + 5;
+paddle1.position.x -= 4;
+const ground = new THREE.Mesh(new THREE.BoxGeometry(1000,1000,3,1,1,1),groundMaterial);
+        ground.position.z = -250;
         ground.receiveShadow = true;
         scene.add(ground);
         pointLight =
@@ -231,14 +163,54 @@ function showPlayer3d1Page() {
         pointLight.position.y = 0;
         pointLight.position.z = 1000;
         pointLight.intensity = 2.9;
+        pointLight.angle = 0.5;
         pointLight.distance = 10000;
         scene.add(pointLight);
         spotLight = new THREE.SpotLight(0xF8D898);
         spotLight.position.set(0, 0, 460);
         spotLight.intensity = 1.5;
+        spotLight.angle = 0.5;
         spotLight.castShadow = true;
+        spotLight.shadow.mapSize.width = 1024;
+        spotLight.shadow.mapSize.height = 1024;
+        spotLight.shadow.camera.near = 1;
+        spotLight.shadow.camera.far = 1000;
+
         scene.add(spotLight);
         renderer.shadowMap.enabled = true;
+            const legWidth = 10;
+            const legHeight = 20;
+            const legDepth = 150;
+        
+            const legMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
+            const leg1 = new THREE.Mesh(new THREE.BoxGeometry(legWidth, legHeight , legDepth), legMaterial);
+            leg1.position.set(-(fieldWidth / 2) + (legWidth / 2), -(fieldHeight / 2) + (legHeight / 2), -(legDepth / 2));
+            scene.add(leg1);
+        
+            const leg2 = new THREE.Mesh(new THREE.BoxGeometry(legWidth, legHeight, legDepth), legMaterial);
+            leg2.position.set(-(fieldWidth / 2) + (legWidth / 2), (fieldHeight / 2) - (legHeight / 2), -(legDepth / 2));
+            scene.add(leg2);
+        
+            const leg3 = new THREE.Mesh(new THREE.BoxGeometry(legWidth, legHeight, legDepth), legMaterial);
+            leg3.position.set((fieldWidth / 2) - (legWidth / 2), -(fieldHeight / 2) + (legHeight / 2), -(legDepth / 2));
+            scene.add(leg3);
+        
+            const leg4 = new THREE.Mesh(new THREE.BoxGeometry(legWidth, legHeight, legDepth), legMaterial);
+            leg4.position.set((fieldWidth / 2) - (legWidth / 2), (fieldHeight / 2) - (legHeight / 2), -(legDepth / 2));
+            scene.add(leg4);
+
+            const wallThickness = 1;
+            const wallHeight = 10; 
+            const wallMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFCC});
+            const topWall = new THREE.Mesh(new THREE.BoxGeometry(fieldWidth + wallThickness * 2, wallThickness, wallHeight), wallMaterial);
+            topWall.position.set(2, fieldHeight / 2 + wallThickness / 2, wallHeight / 2);
+            topWall.position.z += 10;
+            scene.add(topWall);
+            
+            const bottomWall = new THREE.Mesh(new THREE.BoxGeometry(fieldWidth + wallThickness * 2, wallThickness, wallHeight), wallMaterial);
+            bottomWall.position.set(2, -fieldHeight / 2 - wallThickness / 2, wallHeight / 2);
+            bottomWall.position.z += 10;
+            scene.add(bottomWall);
     }
 
     async function ballPhysics() {
@@ -277,29 +249,32 @@ function showPlayer3d1Page() {
     }
 
     function opponentPaddleMovement() {
-        const opponentSpeedFactor = 0.5; 
+        const opponentSpeedFactor = 0.57; 
         const targetPosition = ball.position.y;
         const distanceToTarget = targetPosition - paddle2.position.y;
         const maxMovement = paddleSpeed * opponentSpeedFactor;
         let actualMovement = Math.min(Math.abs(distanceToTarget), maxMovement);
         actualMovement *= (Math.random() * 0.5 + 0.75); 
         const direction = Math.sign(distanceToTarget);
-        paddle2.position.y += actualMovement * direction;
+
+        const newPosition = paddle2.position.y + actualMovement * direction;
+        if (newPosition + paddleHeight / 2 <= fieldHeight / 2 && newPosition - paddleHeight / 2 >= -fieldHeight / 2) {
+            paddle2.position.y = newPosition;
+        } else {
+            paddle2.position.y = newPosition > 0 ? fieldHeight / 2 - paddleHeight / 2 : -fieldHeight / 2 + paddleHeight / 2;
+        }
         paddle2.scale.y += (1 - paddle2.scale.y) * 0.2;
     }
     
-    
-    
-
     function playerPaddleMovement() {
         if (Key.isDown(Key.LEFT_ARROW)) {
-            if (paddle1.position.y < fieldHeight * 0.45) {
+            if (paddle1.position.y < fieldHeight * 0.44) {
                 paddle1DirY = paddleSpeed * 0.5;
             } else {
                 paddle1DirY = 0;
             }
         } else if (Key.isDown(Key.RIGHT_ARROW)) {
-            if (paddle1.position.y > -fieldHeight * 0.45) {
+            if (paddle1.position.y > -fieldHeight * 0.44) {
                 paddle1DirY = -paddleSpeed * 0.5;
             } else {
                 paddle1DirY = 0;
@@ -319,13 +294,9 @@ function showPlayer3d1Page() {
     }
 
     function cameraPhysics() {
-        spotLight.position.x = ball.position.x * 2;
-        spotLight.position.y = ball.position.y * 2;
-        camera.position.x = paddle1.position.x - 100;
-        camera.position.y += (paddle1.position.y - camera.position.y) * 0.05;
-        camera.position.z = paddle1.position.z + 100 + 0.04 * (-ball.position.x + paddle1.position.x);
-        camera.rotation.x = -0.01 * (ball.position.y) * Math.PI / 180;
-        camera.rotation.y = -60 * Math.PI / 180;
+        camera.position.x = paddle1.position.x - 200;
+        camera.position.z = paddle1.position.z + 100;
+        camera.rotation.y = -70 * Math.PI / 180;
         camera.rotation.z = -90 * Math.PI / 180;
     }
 
@@ -367,29 +338,31 @@ function showPlayer3d1Page() {
     async function matchScoreCheck() {
         let gameResult;
         let message;
+        let cpuwins = await translateKey("cpuwins");  
+        let playwins = await translateKey("playwins");  
         if (score1 >= maxScore) {
             ballSpeed = 0;
             gameResult = 'win';
-            message = "Player wins!";
+            message = playwins;
             bounceTime++;
-            paddle1.position.z = Math.sin(bounceTime * 0.1) * 10;
         } else if (score2 >= maxScore) {
             ballSpeed = 0;
             gameResult = 'lost';
-            message = "CPU wins!";
+            message = cpuwins;
             bounceTime++;
-            paddle2.position.z = Math.sin(bounceTime * 0.1) * 10;
         }
     
         if (gameResult) {
             if (scores3dElement)
                 scores3dElement.innerHTML = message;
     
-            if (winnerBoardElement) {   
+            if (winnerBoardElement) {
+                let refresh = await translateKey("refresh");  
                 winnerBoardElement.style.display = "block";
-                winnerBoardElement.innerHTML = "Refresh to play again";
+                winnerBoardElement.innerHTML = refresh;
                 startGameButton.style.display = "block";
-                startGameButton.innerHTML = "Play Again";
+                let plagain = await translateKey("plagain");
+                startGameButton.innerHTML = plagain;
                 startGameButton.addEventListener("click", function () {
                     location.reload();
                 });
@@ -446,6 +419,4 @@ function showPlayer3d1Page() {
             Key.onKeyup(Key.RIGHT_ARROW);
         }
     }
-
-    //setup();
 };

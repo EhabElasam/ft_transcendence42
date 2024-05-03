@@ -1,8 +1,9 @@
-async function showTournamentPage() {
+async function showTournamentTicPage() {
     async function askPlayerCount(tournamentName) {
-        const canvas = document.getElementById('canvastour');
+        const canvas = document.getElementById('canvasTouTic2');
         if (!canvas) return;
-    
+
+
         const ctx = canvas.getContext('2d');
         canvas.width = 800;
         canvas.height = 600;
@@ -41,9 +42,9 @@ async function showTournamentPage() {
     }
     
     async function getPlayerNames(playerCount, currentPlayerIndex, players, tournamentName) {
-        const canvas = document.getElementById('canvastour');
-        const input = document.createElement('input');
+        const canvas = document.getElementById('canvasTouTic2');
         if (!canvas) return;
+        const input = document.createElement('input');
     
         input.type = 'text';
         let enter = await translateKey("enter");
@@ -116,7 +117,7 @@ async function showTournamentPage() {
     }
     
     async function askTournamentName() {
-        const canvas = document.getElementById('canvastour');
+        const canvas = document.getElementById('canvasTouTic2');
         if (!canvas) return;
     
         const ctx = canvas.getContext('2d');
@@ -173,12 +174,13 @@ async function showTournamentPage() {
     }
     
     async function showTournament(players, playerCount, tournamentName) {
-        const canvas = document.getElementById('canvastour');
+        const canvas = document.getElementById('canvasTouTic2');
         if (!canvas) return;
         const gameData = [];
         const ctx = canvas.getContext('2d');
         canvas.width = 800;
         canvas.height = 600;
+
     
         shuffleArray(players);
     
@@ -203,7 +205,7 @@ async function showTournamentPage() {
                 ctx.fillText(line, canvas.width / 2, startingHeight + index * lineHeight);
             });
             setTimeout(function() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                //ctx.clearRect(0, 0, canvas.width, canvas.height);
             }, duration);
         }
         
@@ -217,9 +219,9 @@ async function showTournamentPage() {
                     let winner = await translateKey("winner");
                     let congrats = await translateKey("congrats");
                     console.log(`The winner of the tournament is Player ${players[0]}! Congratulations!`);
-                    //localStorage.getItem('userNickname') + " " + tournamentName;
-                    //gameData.push({result: players[0], name: tournamentName});
                     await sendTournamentData(gameData,  players[0]);
+                    canvas.width = 800;
+                    canvas.height = 600;
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -230,16 +232,15 @@ async function showTournamentPage() {
                     
                     ctx.fillText(winner, canvas.width / 2 , canvas.height / 3);
                     ctx.fillText(`🏆🏆   ${players[0]} !  🏆🏆`, canvas.width / 2 , canvas.height / 2.4);
-                    //ctx.fillText(`${players[0]} !`, canvas.width / 2 , canvas.height / 2.4);
                     ctx.fillText(congrats, canvas.width / 2 , canvas.height / 2);
                     return;
                 }
             }
             let matchPlayers = [players[currentMatch * 2], players[currentMatch * 2 + 1]];
             console.log(` ${currentMatch + 1}:  ${matchPlayers[0]}  vs  ${matchPlayers[1]}`);
-            displayMessage(` ${matchPlayers[0]} vs  ${matchPlayers[1]}`, 3000);
+            displayMessage(` ${matchPlayers[0]}  vs  ${matchPlayers[1]}`, 3000);
             setTimeout(function() {
-                showPongTour(matchPlayers[0], matchPlayers[1], roundMatches === 1, handleWinner);
+                showTicTacToeMatch(matchPlayers[0], matchPlayers[1], roundMatches === 1, handleWinner);
             }, 3000); 
         }    
     
@@ -247,7 +248,7 @@ async function showTournamentPage() {
             try {
                 let csrfToken = await getCSRFCookie();
                 let jwtToken = localStorage.getItem('jwtToken');
-                tournamentName = localStorage.getItem('userNickname') + ":pong " + tournamentName;
+                tournamentName = localStorage.getItem('userNickname') + ":tic_tac " + tournamentName;
     
                 const response = await fetch('/api/save_tournament_data', {
                     method: 'POST',
@@ -257,8 +258,6 @@ async function showTournamentPage() {
                         'Authorization': `Bearer ${jwtToken}`
                     },
                     body: JSON.stringify({ tournamentData, name: tournamentName, winner: winnerName })
-    
-                    //body: JSON.stringify({ tournamentData}, {name: tournamentName, winner: winnerName })
                 });
         
                 if (response.ok) {
@@ -273,6 +272,7 @@ async function showTournamentPage() {
         }
     
         async function handleWinner(winnerName) {
+            console.log(winnerName + " wins the match!");
             winners.push(winnerName);
             currentMatch++;
             
@@ -286,9 +286,7 @@ async function showTournamentPage() {
                     const gameResult = winners[i] ? `${winners[i]} won!` : '';  
                     gameData.push({ matchNumber: i + 1, players: matchPlayers, result: gameResult });
                 }
-                
-                // Send tournament data to the backend
-               
+                               
             } catch (error) {
                 console.error('Error saving tournament data:', error);
             }
@@ -323,277 +321,231 @@ async function showTournamentPage() {
         }
     }
     
-    function showPongTour(player1Name, player2Name, isFinal, handleWinner) {
-        const canvas = document.getElementById('canvastour');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        canvas.width = 800;
-        canvas.height = 600;
-    
-        let wPressed = false;
-        let sPressed = false;
-        let upArrowPressed = false;
-        let downArrowPressed = false;
-        let gameOver = false;
-        let isGamePaused = false;
-    
-        const paddleWidth = 10;
-        const paddleHeight = 100;
-    
-        const player1 = {
-    
-            name: player1Name,
-            x: 10,
-            y: canvas.height / 2 - paddleHeight / 2,
-            width: paddleWidth,
-            height: paddleHeight,
-            color: '#FFF',
-            score: 0
-        };
-    
-        const player2 = {
-            name: player2Name,
-            x: canvas.width - paddleWidth - 10,
-            y: canvas.height / 2 - paddleHeight / 2,
-            width: paddleWidth,
-            height: paddleHeight,
-            color: '#FFF',
-            score: 0
-        };
-    
-        const ball = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            radius: 7,
-            speed: 7,
-            velocityX: 5,
-            velocityY: 5,
-            color: '#FFF'
-        };
-    
-        function resetGame() {
-            player1.score = 0;
-            player2.score = 0;
-            resetBall();
+    async function showTicTacToeMatch(player1Name, player2Name, isFinalRound, handleWinner) {
+        const canvas = document.getElementById('canvasTouTic2');
+        if (!canvas) {
+            console.log('Canvas not found');
+            return;
         }
+        if (canvas) {
+            const context = canvas.getContext('2d');
+            const canvasSize = 500;
+            const sectionSize = canvasSize / 3;
+            let player = 1;
+            let isProcessingMove = false;
+            const lineColor = "#8f957d";
+            const board = Array(3).fill(null).map(() => Array(3).fill(null));
     
-        document.addEventListener("visibilitychange", function () {
-            if (document.visibilityState === 'hidden') {
-                isGamePaused = true;
-            } else {
-                isGamePaused = false;
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+            context.translate(0.5, 0.5);
+            console.log('Drawing initial board');
+    
+            function checkWinner() {
+                for (let i = 0; i < 3; i++) {
+                    if (board[i][0] === board[i][1] && board[i][1] === board[i][2] && board[i][0] !== null) {
+                        return board[i][0];
+                    }
+                    if (board[0][i] === board[1][i] && board[1][i] === board[2][i] && board[0][i] !== null) {
+                        return board[0][i];
+                    }
+                }
+                if (board[0][0] === board[1][1] && board[1][1] === board[2][2] && board[0][0] !== null) {
+                    return board[0][0];
+                }
+                if (board[0][2] === board[1][1] && board[1][1] === board[2][0] && board[0][2] !== null) {
+                    return board[0][2];
+                }
+                let isBoardFull = true;
+                for (let x = 0; x < 3; x++) {
+                    for (let y = 0; y < 3; y++) {
+                        if (board[x][y] === null) {
+                            isBoardFull = false;
+                            break;
+                        }
+                    }
+                    if (!isBoardFull) break;
+                }
+            
+                if (isBoardFull) {
+                    return 'nowinner';
+                }
+                return null;
             }
-        });
-    
-        showStartMessageWithCountdown(5);
-    
-        async function showStartMessageWithCountdown(seconds) {
-            if (seconds > 0) {
-                ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        async function showGameOverMessage(winner) {
+            const context = canvas.getContext('2d');
+            canvas.width = 650;
+            canvas.height = 600;
+            const canvasSize = canvas.width;
+            context.fillStyle = "rgba(0, 0, 0, 0.7)";
+            context.fillRect(0, 0, canvasSize, canvasSize);
+            context.fillStyle = "white";
+            context.font = "48px Arial";
+            context.textAlign = "center";
+            
+            let tied = await translateKey("tied");
+            let tied2 = await translateKey("tied2");
+            const message = winner === 'nowinner' ? tied : `🏆 ${winner} 🏆`;
+            context.fillText(message, canvasSize / 2, canvasSize / 2);
+            if (winner === 'nowinner'){
+                context.font = "30px Arial";
+                context.fillStyle = "white";
+                context.textAlign = "center";
+                context.fillText( tied2, canvas.width / 2, canvas.height / 1.5);
+            }
+
         
-                ctx.fillStyle = "#FFF";
-                ctx.font = "20px Arial";
-                ctx.textAlign = "left";
-        
-                let useWS = await translateKey("useWS");
-                ctx.fillText(useWS+" (W / S)", 20, canvas.height / 2 + 10);
-        
-                ctx.fillText(useWS+" (↑ / ↓)", canvas.width - 150, canvas.height / 2 + 10);
-                ctx.font = "bold 30px Arial";
-                let whoevergets = await translateKey("whoevergets");
-                ctx.fillText(whoevergets, canvas.width / 2 - 220, canvas.height / 2 - 20);
-    
-                ctx.font = "bold 30px Arial";
-                let starting = await translateKey("starting");
-                ctx.fillText(starting + seconds, canvas.width / 2 - 100, canvas.height / 2 + 50);
-    
-                setTimeout(function () {
-                    showStartMessageWithCountdown(seconds - 1);
-                }, 1000);
-            } else {
-                gameLoop();
-            }
-        }
-    
-    
-        function resetBall() {
-            ball.x = canvas.width / 2;
-            ball.y = Math.random() * (canvas.height - ball.radius * 2) + ball.radius;
-            ball.velocityX = (Math.random() > 0.5 ? 1 : -1) * ball.speed;
-            ball.velocityY = (Math.random() * 2 - 1) * ball.speed;
-            ball.speed = 7;
-        }
-    
-        function gameLoop() {
-            if (!isGamePaused && !gameOver) {
-                update();
-                draw();
-            }
-            requestAnimationFrame(gameLoop);
-        }
-    
-        function initControls() {
-            document.addEventListener('keydown', keyDownHandler);
-            document.addEventListener('keyup', keyUpHandler);
-        }
-    
-        function removeControls() {
-            document.removeEventListener('keydown', keyDownHandler);
-            document.removeEventListener('keyup', keyUpHandler);
-        }
-    
-        initControls();
-    
-        function keyDownHandler(event) {
-            switch (event.keyCode) {
-                case 87:
-                    wPressed = true;
-                    break;
-                case 83:
-                    sPressed = true;
-                    break;
-                case 38:
-                    upArrowPressed = true;
-                    break;
-                case 40:
-                    downArrowPressed = true;
-                    break;
-            }
-        }
-    
-        function keyUpHandler(event) {
-            switch (event.keyCode) {
-                case 87:
-                    wPressed = false;
-                    break;
-                case 83:
-                    sPressed = false;
-                    break;
-                case 38:
-                    upArrowPressed = false;
-                    break;
-                case 40:
-                    downArrowPressed = false;
-                    break;
-            }
-        }
-    
-        function update() {
-            if (gameOver|| isGamePaused) return;
-    
-            if (wPressed && player1.y > 0) player1.y -= 8;
-            if (sPressed && player1.y < canvas.height - player1.height) player1.y += 8;
-            if (upArrowPressed && player2.y > 0) player2.y -= 8;
-            if (downArrowPressed && player2.y < canvas.height - player2.height) player2.y += 8;
-    
-            ball.x += ball.velocityX;
-            ball.y += ball.velocityY;
-    
-            if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
-                ball.velocityY = -ball.velocityY;
-            }
-    
-            if (ball.x - ball.radius < 0) {
-                player2.score++;
-                checkGameOver();
-            } else if (ball.x + ball.radius > canvas.width) {
-                player1.score++;
-                checkGameOver();
-            }
-    
-            if (collisionDetect(player1, ball)) handlePaddleBallCollision(player1, ball);
-            if (collisionDetect(player2, ball)) handlePaddleBallCollision(player2, ball);
-        }
-    
-        function checkGameOver() {
-            if (player1.score >= 7 || player2.score >= 7) {
-                gameOver = true;
-                showGameOverModal(player1.score > player2.score ? player1.name : player2.name);
-                removeControls();
-            } else {
-                resetBall();
-            }
-        }
-    
-        function collisionDetect(player, ball) {
-            player.top = player.y;
-            player.right = player.x + player.width;
-            player.bottom = player.y + player.height;
-            player.left = player.x;
-    
-            ball.top = ball.y - ball.radius;
-            ball.right = ball.x + ball.radius;
-            ball.bottom = ball.y + ball.radius;
-            ball.left = ball.x - ball.radius;
-    
-            return ball.right > player.left && ball.top < player.bottom && ball.left < player.right && ball.bottom > player.top;
-        }
-    
-        function handlePaddleBallCollision(player, ball) {
-            let collidePoint = ball.y - (player.y + player.height / 2);
-            collidePoint = collidePoint / (player.height / 2);
-            let angleRad = (Math.PI / 4) * collidePoint;
-            let direction = (ball.x < canvas.width / 2) ? 1 : -1;
-            ball.velocityX = direction * ball.speed * Math.cos(angleRad);
-            ball.velocityY = ball.speed * Math.sin(angleRad);
-            ball.speed += 0.1;
-        }
-    
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawPaddle(player1.x, player1.y, player1.width, player1.height, player1.color);
-            drawPaddle(player2.x, player2.y, player2.width, player2.height, player2.color);
-            drawBall(ball.x, ball.y, ball.radius, ball.color);
-            drawScore();
-        }
-    
-        function drawPaddle(x, y, width, height, color) {
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, width, height);
-        }
-    
-        function drawBall(x, y, radius, color) {
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2, true);
-            ctx.closePath();
-            ctx.fill();
-        }
-    
-        function drawScore() {
-            ctx.textAlign = "start";
-            ctx.fillStyle = "#FFF";
-            ctx.font = "32px Arial";
-            ctx.fillText(`${player1Name} : ${player1.score}`, 20, 50);
-            ctx.fillText(`${player2Name} : ${player2.score}`, canvas.width - 200, 50);
-        }
-    
-        function showGameOverModal(winnerName) {
-            console.log(`${winnerName} won!`);
-            showGameOverModal2(winnerName);
-            setTimeout(function() {
-                handleWinner(winnerName);
+            setTimeout(() => {
+                context.clearRect(0, 0, canvasSize, canvasSize);
+                if (winner !== 'nowinner') {
+                    handleWinner(winner);
+                } else {
+                    handleTie();
+                }
             }, 3000);
         }
-    
-        function showGameOverModal2(winnerName) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            setTimeout(async function() {
-            let won = await translateKey("won");
-            ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#FFF";
-            ctx.font = "bold 30px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(`🏆 ${winnerName} `+won+` 🏆`, canvas.width / 2, canvas.height / 2);
-        }, 1000);
+
+        function handleTie() {
+            console.log("The game is tied. Deciding next steps.");
+            showTicTacToeMatch(player1Name, player2Name, isFinalRound, handleWinner);
         }
-    }
+        
+
+        function addPlayingPiece(mouse) {
+            if (isProcessingMove) return;
+            isProcessingMove = true;
     
-    const canvas = document.getElementById('canvastour');
+            for (let x = 0; x < 3; x++) {
+                for (let y = 0; y < 3; y++) {
+                    const xCordinate = x * sectionSize;
+                    const yCordinate = y * sectionSize;
+    
+                    if (mouse.x >= xCordinate && mouse.x <= xCordinate + sectionSize &&
+                        mouse.y >= yCordinate && mouse.y <= yCordinate + sectionSize) {
+    
+                        if (board[x][y] !== null) {
+                            isProcessingMove = false;
+                            return;
+                        }
+    
+                        board[x][y] = player === 1 ? player1Name : player2Name;
+                        const drawFunc = player === 1 ? drawX : drawO;
+                        drawFunc(xCordinate, yCordinate);
+                        drawLines(10, lineColor);
+    
+                        setTimeout(() => {
+                            let winner = checkWinner();
+                            if (winner) {
+                                showGameOverMessage(winner);
+                                canvas.removeEventListener('mouseup', handleRelease);
+                                canvas.removeEventListener('touchend', handleRelease);
+                            } else {
+                                player = 3 - player;
+                            }
+                            isProcessingMove = false;
+                        }, 10);
+                        return;
+                    }
+                }
+            }
+        }
+
+        function drawO(xCordinate, yCordinate) {
+            const halfSectionSize = 0.5 * sectionSize;
+            const centerX = xCordinate + halfSectionSize;
+            const centerY = yCordinate + halfSectionSize;
+            const radius = (sectionSize - 100) / 2;
+    
+            context.lineWidth = 10;
+            context.strokeStyle = "#a32c08";
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            context.stroke();
+        }
+    
+        function drawX(xCordinate, yCordinate) {
+            const offset = 50;
+            context.strokeStyle = "#667c21";
+            context.beginPath();
+            context.moveTo(xCordinate + offset, yCordinate + offset);
+            context.lineTo(xCordinate + sectionSize - offset, yCordinate + sectionSize - offset);
+            context.moveTo(xCordinate + offset, yCordinate + sectionSize - offset);
+            context.lineTo(xCordinate + sectionSize - offset, yCordinate + offset);
+            context.stroke();
+        }
+    
+            function drawLines(lineWidth, strokeStyle) {
+                context.lineWidth = lineWidth;
+                context.strokeStyle = strokeStyle;
+            
+                context.beginPath();
+                context.moveTo(sectionSize, 0);
+                context.lineTo(sectionSize, canvasSize);
+                context.moveTo(2 * sectionSize, 0);
+                context.lineTo(2 * sectionSize, canvasSize);
+                context.moveTo(0, sectionSize);
+                context.lineTo(canvasSize, sectionSize);
+                context.moveTo(0, 2 * sectionSize);
+                context.lineTo(canvasSize, 2 * sectionSize);
+                context.stroke();
+            
+                context.beginPath();
+                context.rect(0, 0, canvasSize, canvasSize);
+                context.stroke();
+            }
+            
+            function getCanvasMousePosition(event) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: event.clientX - rect.left,
+                    y: event.clientY - rect.top
+                }
+            }
+    
+            function getCanvasMousePosition(event) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                let x, y;
+    
+                if (event.touches) {
+                    x = event.touches[0].clientX - rect.left;
+                    y = event.touches[0].clientY - rect.top;
+                } else {
+                    x = event.clientX - rect.left;
+                    y = event.clientY - rect.top;
+                }
+                return {
+                    x: x * scaleX,
+                    y: y * scaleY
+                };
+            }
+    
+            function handleRelease(event) {
+                event.preventDefault();
+                if (event.type === 'touchend' && event.changedTouches.length > 1) return;
+                
+                let position;
+                if (event.changedTouches) {
+                    position = getCanvasMousePosition(event.changedTouches[0]);
+                } else {
+                    position = getCanvasMousePosition(event);
+                }
+    
+                addPlayingPiece(position);
+            }
+    
+            canvas.addEventListener('mouseup', handleRelease);
+            canvas.addEventListener('touchend', handleRelease);
+    
+            drawLines(10, lineColor);
+        }
+    
+    }
+    const canvas = document.getElementById('canvasTouTic2');
     if (canvas) {
-    await askPlayerCount("Tournament");
+    await askPlayerCount("TIC_Tournament");
     }
     
     }

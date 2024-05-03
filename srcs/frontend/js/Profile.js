@@ -7,12 +7,17 @@ function displayErrorMessage(message) {
         errorMessageElement.style.fontSize = '0.6em';
     }
 }
-
-async function showGameHistory() {
+async function showGameHistory2() {
+    window.addEventListener('click', function(event) {
+        const gameHistoryContainer = document.getElementById('gameHistory');
+        if (gameHistoryContainer && event.target !== gameHistoryContainer && !gameHistoryContainer.contains(event.target)) {
+            gameHistoryContainer.style.display = 'none';
+        }
+    });
     try {
         const jwtToken = localStorage.getItem('jwtToken');
         
-        const gameHistoryResponse = await fetch('/api/fetch_game_history', {
+        const gameHistoryResponse = await fetch(`/api/fetch_game_history`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${jwtToken}`,
@@ -23,25 +28,37 @@ async function showGameHistory() {
         if (gameHistoryResponse.ok) {
             const gameHistoryData = await gameHistoryResponse.json();
 
+            let cls = await translateKey("cls");
             const gameHistoryContainer = document.getElementById('gameHistory');
-            gameHistoryContainer.innerHTML = ''; 
+            if (gameHistoryContainer){
+                gameHistoryContainer.style.display = 'flex'; 
+                gameHistoryContainer.innerHTML = '<button id="closeGameHistoryBtn" class="close-button" onclick="closeGameHistory2()">'+cls+'</button>';
+            }
+            if (gameHistoryData.length === 0) {
+                let emptyGameHistory = await translateKey("emptyGameHistory");
+                gameHistoryContainer.innerHTML += `<div class="mb-3"><br/> `+ emptyGameHistory +` </div>`;
+            } else {
+                gameHistoryData.sort((a, b) => new Date(b.date_time_played) - new Date(a.date_time_played));
 
-            // Sort game history by date_time_played in descending order
-            gameHistoryData.sort((a, b) => new Date(b.date_time_played) - new Date(a.date_time_played));
+                let op = await translateKey("op");
+                let gm = await translateKey("gm");
+                let dt = await translateKey("dt");
+                let res = await translateKey("res");
 
-            gameHistoryData.forEach(game => {
-                const gameElement = document.createElement('div');
-                gameElement.classList.add('game-item', 'mb-3', 'border', 'border-primary', 'rounded', 'p-3');
-                gameElement.innerHTML = `
-                    <div><strong>Opponent:</strong> ${game.opponent || 'cpu'}</div>
-                    <div><strong>Game Type:</strong> ${game.game_type}</div>
-                    <div><strong>Date Played:</strong> ${game.date_time_played}</div>
-                    <div><strong>Result:</strong> 
-                        ${game.tournaments_won ? '<i class="bi bi-trophy-fill text-success fs-5"></i>' : '<i class="bi bi-emoji-frown-fill text-danger fs-5"></i>'}
-                    </div>
-                `;
-                gameHistoryContainer.appendChild(gameElement);
-            });
+                gameHistoryData.forEach(game => {
+                    const gameElement = document.createElement('div');
+                    gameElement.classList.add('game-item', 'mb-3', 'border', 'border-primary', 'rounded', 'p-3');
+                    gameElement.innerHTML = `
+                        <div><strong>`+op+`:</strong> ${game.opponent || 'cpu'}</div>
+                        <div><strong>`+gm+`:</strong> ${game.game_type}</div>
+                        <div><strong>`+dt+`:</strong> ${game.date_time_played}</div>
+                        <div><strong>`+res+`:</strong> 
+                            ${game.tournaments_won ? '<i class="bi bi-trophy-fill text-success fs-5"></i>' : '<i class="bi bi-emoji-frown-fill text-danger fs-5"></i>'}
+                        </div>
+                    `;
+                    gameHistoryContainer.appendChild(gameElement);
+                });
+            }
         } else {
             throw new Error('Failed to fetch game history');
         }
@@ -50,6 +67,7 @@ async function showGameHistory() {
         console.error('Error fetching and displaying game history:', error);
     }
 }
+
 
 function isLocalDeployment() {
     return window.location.href.includes("pong42");
@@ -116,7 +134,12 @@ async function fetchProfileData() {
         throw new Error('Failed to fetch profile data');
     }
 }
-
+function closeGameHistory2() {
+    const gameHistoryContainer = document.getElementById('gameHistory');
+    if (gameHistoryContainer) {
+        gameHistoryContainer.style.display = 'none';
+    }
+}
 
 async function selectAvatar(imageLink) {
     try {
@@ -473,8 +496,9 @@ async function fetchAndDisplayProfile() {
         }
 
         if (document.getElementById('changeNick')) {
+            let newNick = await translateKey("newNick");
             document.getElementById('changeNick').addEventListener('click', async function () {
-                const newNickname = prompt("Enter new nickname");
+                const newNickname = prompt(newNick);
                 if (newNickname !== null && newNickname.trim() !== "") {
                     try {
                         await updateProfile({ nickname: newNickname });

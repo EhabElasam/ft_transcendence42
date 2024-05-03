@@ -1,12 +1,20 @@
 async function display2faPage() {
-    async function check2FAStatus() {
+    let disable2faVal = await translateKey('disable2fa');
+    let enable2faVal = await translateKey('enable2fa');
+    let FAenabledVal = await translateKey('2FAdisabled');
+    let FAenabledVal2 = await translateKey('2FAenabled');
+    let faDeactivated = await translateKey('2faDeactivated');
+    let faActivated = await translateKey('2faActivated');
+    let faFailed = await translateKey('2faFailed');
+    let activate2fa = await translateKey('activate2fa');
+    async function check2FAStatus(username) {
         try {
             
             const jwtToken = localStorage.getItem('jwtToken');
             const csrfToken = await getCSRFCookie();
             let username = localStorage.getItem('userLogin');
             const response = await fetch(`/api/2fa-status?username=${username}`, {
-                method: 'GET',
+                method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${jwtToken}`,
                     'X-CSRFToken': csrfToken
@@ -18,16 +26,16 @@ async function display2faPage() {
             }
 
             const data = await response.json();
-
-            const statusElement = document.getElementById('status');
-            statusElement.textContent = data.enabled ? 'Enabled' : 'Not enabled';
-
             
+            const statusElement = document.getElementById('2FAdisabled');
+            //console.log("2fa enabled", data.enabled);
+            statusElement.textContent = data.enabled ? FAenabledVal2 : FAenabledVal;
+
             const enable2FAButton = document.getElementById('enable2FA');
             if (data.enabled) {
-                enable2FAButton.textContent = 'Disable 2FA';
+                enable2FAButton.textContent = disable2faVal;
             } else {
-                enable2FAButton.textContent = 'Enable 2FA';
+                enable2FAButton.textContent = enable2faVal;
             }
         } catch (error) {
             console.error('Error checking 2FA status:', error);
@@ -55,9 +63,12 @@ async function display2faPage() {
             if (response.ok) {
                 const statusElement = document.getElementById('status');
                 if (statusElement) {
-                    statusElement.textContent = 'Not enabled';
+                    statusElement.textContent = FAenabledVal;
                 }
-                showNotification("2FA deactivated successfully.", true);
+                showNotification(faDeactivated, true);
+                document.getElementById('qrCodeSection').style.display = 'none';
+                document.getElementById('qrCode').innerHTML = '';
+                document.getElementById('activationCode').value = '';
                 document.getElementById('errorLabel').textContent = '';  
             } else {
                 const responseData = await response.json();
@@ -65,7 +76,7 @@ async function display2faPage() {
             }
         } catch (error) {
             console.error('Error deactivating 2FA:', error);
-            showNotification("Failed to deactivate 2FA. Please try again later.", false);
+            showNotification(faFailed, false);
             displayError(error.message);
         }
     }
@@ -76,7 +87,12 @@ async function display2faPage() {
             const csrfToken = await getCSRFCookie();
     
             const activationCode = document.getElementById('activationCode').value;
-            console.log(activationCode)
+    
+            if (!activationCode || !(/^\d{6}$/.test(activationCode))) {
+                displayError('Activation code must be a 6-digit numeric value.');
+                return;
+            }
+    
             const response = await fetch(`/api/2fa-activate`, {
                 method: 'POST',
                 body: JSON.stringify({ activationCode }),
@@ -88,8 +104,12 @@ async function display2faPage() {
             });
     
             if (response.ok) {
-                
-                location.reload();
+                showNotification(faActivated, true);
+                document.getElementById('qrCodeSection').style.display = 'none';
+                document.getElementById('qrCode').innerHTML = '';
+                document.getElementById('activationCode').value = '';
+                document.getElementById('errorLabel').textContent = '';
+                //location.reload();
             } else {
                 const responseData = await response.json();
                 throw new Error(responseData.error || 'Failed to activate 2FA');
@@ -99,6 +119,7 @@ async function display2faPage() {
             displayError(error.message);
         }
     }
+    
     
     async function generateQRCode() {
         try {
@@ -129,12 +150,20 @@ async function display2faPage() {
     
     async function enableOrDisable2FA() {
         const button = document.getElementById('enable2FA');
-        if (button.textContent === 'Enable 2FA') {
+        const statusElement = document.getElementById('2FAdisabled');
+        if (button.textContent === enable2faVal) {
             await enable2FA();
-            button.textContent = 'Disable 2FA';
+            
+            button.textContent = disable2faVal;
+            if (statusElement) 
+                statusElement.textContent = FAenabledVal;
+            
         } else {
             await disable2FA();
-            button.textContent = 'Enable 2FA';
+            
+            button.textContent = enable2faVal;
+            if (statusElement) 
+                statusElement.textContent = FAenabledVal2;
         }
     }
     
@@ -145,9 +174,12 @@ async function display2faPage() {
             errorLabel.style.color = 'red'; 
         }
     }
-    
-    check2FAStatus();
+    username = localStorage.getItem('userLogin');
+    check2FAStatus(username);
 
     document.getElementById('enable2FA').addEventListener('click', enableOrDisable2FA);
-    document.getElementById('activate2FA').addEventListener('click', activate2FA);
+    if (document.getElementById('activate2fa'))
+        document.getElementById('activate2fa').addEventListener('click', activate2FA);
+    currrentLanguage2 = localStorage.getItem('language');
+    translate(currrentLanguage2);
 }

@@ -24,6 +24,8 @@ const routes = {
   "#tic1": "/views/tic1.html",
   "#tic2": "/views/tic2.html",
   "#tournament": "/views/tournament.html",
+  "#tournament2": "/views/tournament2.html",
+  "#tournaments": "/views/alltournaments.html",
   "#viewprofile": "/views/viewprofile.html",
   "#rps" : "/views/rps.html",
   "#chatselect" : "/views/chatselect.html",
@@ -45,29 +47,13 @@ if (paramsIndex2 !== -1) {
 }
 
 let csrfToken;
-function getBackendURL() {
-  const currentURL = window.location.href;
-  const privateIPRegex = /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/;
-  let backendURL = "";
-  
-  if (currentURL.includes("localhost") || currentURL.includes("127.0.0.1") || privateIPRegex.test(currentURL)) {
-      backendURL = "/api";
-  } else {
-      backendURL = "/api";
-  }
-  
-  return backendURL;
-}
+
 
 function getBackendSigninURL() {
   const currentURL = new URL(window.location.href);
-  let backendSigninURL = "/api/signin42b/"; 
+  const referralURL = encodeURIComponent(currentURL.origin);
+  let backendSigninURL = `/api/signin42c/?referral_url=${referralURL}`;
   
-  if ((currentURL.hostname === "localhost" || currentURL.hostname === "127.0.0.1" || currentURL.hostname.match(/^10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\./))) {
-      const referralURL = encodeURIComponent(currentURL.origin);
-      backendSigninURL = `/api/signin42c/?referral_url=${referralURL}`;
-  }
- 
 return backendSigninURL;
 }
 
@@ -208,6 +194,7 @@ async function changeLanguage(languageCode) {
   translationsCache = {};
   await fetchAndCacheTranslations(languageCode);
   translate(languageCode);
+  location.reload();
 }
 
 
@@ -243,6 +230,33 @@ function translateKey(key) {
 
 
 initialize();
+async function cleanLogout() {
+  try {
+      const jwtToken = localStorage.getItem('jwtToken');
+      const csrfToken = await getCSRFCookie();
+
+      const response = await fetch('/api/logout', {
+          method: 'POST',
+          headers: {
+              'Authorization': `Bearer ${jwtToken}`,
+              'X-CSRFToken': csrfToken
+          }
+      });
+
+      const tmplanguage = localStorage.getItem('language');
+      localStorage.clear();
+      localStorage.setItem('language', tmplanguage);
+      //window.location.href = '/';
+  } catch (error) {
+      console.error('Error logging out:', error);
+      
+      const tmplanguage = localStorage.getItem('language');
+      localStorage.clear();
+      localStorage.setItem('language', tmplanguage);
+      //window.location.href = '/';
+  }
+  location.reload();
+};
 
 function doLogout (){
   const language = localStorage.getItem("language");
@@ -314,7 +328,7 @@ const handleLocation = async () => {
       }
       break;
     case "#logout":
-      doLogout();
+      cleanLogout();
       break;
     case "#chat":
       openChat();
@@ -367,10 +381,17 @@ const handleLocation = async () => {
     case '#tic2':
       showTic2();
       break;
+    case '#tournaments':
+      allTournaments();
+      break;
     case '#tournament':
-      const tournamentHtml = await fetch(routes[path]).then((data) => data.text());
-      document.getElementById("app").innerHTML = tournamentHtml;
-      askPlayerCount();
+      // const tournamentHtml = await fetch(routes[path]).then((data) => data.text());
+      // document.getElementById("app").innerHTML = tournamentHtml;
+      // askPlayerCount();
+      showTournamentPage();
+      break;
+    case '#tournament2':
+      showTournamentTicPage();
       break;
     case '#contact':
       showImprint();

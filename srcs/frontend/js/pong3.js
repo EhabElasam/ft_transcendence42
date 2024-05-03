@@ -182,16 +182,6 @@ function showPong3() {
 
         showStartMessageWithCountdown(7);
 
-        function newGButton() {
-            const button = document.getElementById('newGButton');
-            if (button) {
-                button.style.display = 'block';
-                button.addEventListener('click', function () {
-                    location.reload();
-                });
-            }
-        }
-
         async function showGameOverModal(loser) {
             ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -199,21 +189,25 @@ function showPong3() {
             ctx.font = "48px Arial";
             ctx.textAlign = "center";
             let lost = await translateKey("lost");
+            let anywhere = await translateKey("anywhere");
             ctx.fillText(`${loser} `+lost, canvas.width / 2, canvas.height / 4);
-
-            setTimeout(() => {
-                const newGButton2 = document.getElementById('newGButton');
-                if (newGButton2)
-                    document.getElementById('newGButton').style.display = 'block';
-                newGButton();
-            }, 1000);
+            
+            ctx.font = "24px Arial";
+            ctx.fillText( anywhere, canvas.width / 2, canvas.height / 2 + 50);
+            
             gameOver = true;
+            addCanvasClickListener();
         }
 
+        function addCanvasClickListener() {
+            canvas.addEventListener('click', function handleClick() {
+                location.reload();
+                canvas.removeEventListener('click', handleClick);
+            }, { once: true });
+        }
 
         function update() {
-            if (gameOver) return;
-
+            if (gameOver|| isGamePaused) return;
 
             if (wPressed && player1.y > 0) player1.y -= 8;
             else if (sPressed && player1.y < canvas.height - player1.height) player1.y += 8;
@@ -226,7 +220,6 @@ function showPong3() {
 
             ball.x += ball.velocityX;
             ball.y += ball.velocityY;
-
 
             if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
                 ball.velocityY = -ball.velocityY;
@@ -247,7 +240,6 @@ function showPong3() {
                     resetBall();
                 }
             }
-
 
             if (collisionDetect(player1, ball)) handlePaddleBallCollision(player1, ball);
             if (collisionDetect(player2, ball)) handlePaddleBallCollision(player2, ball);
@@ -311,8 +303,7 @@ function showPong3() {
                 update();
                 draw();
             }
-            requestAnimationFrame(gameLoop);;
+            requestAnimationFrame(gameLoop);
         }
-
     }
 }
