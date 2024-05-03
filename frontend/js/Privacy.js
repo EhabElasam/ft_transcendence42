@@ -1,4 +1,0 @@
-function showPrivacyPolicy()
-{
-    translate(currentLanguage);
-}

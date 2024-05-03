@@ -1,4 +1,0 @@
-function showImprint()
-{
-    translate(currentLanguage);
-}
